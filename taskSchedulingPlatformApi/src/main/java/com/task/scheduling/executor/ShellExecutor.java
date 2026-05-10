@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -198,17 +199,21 @@ public class ShellExecutor {
             pb.redirectErrorStream(true);
             
             String os = System.getProperty("os.name").toLowerCase();
-            if (os.contains("win")) {
-                pb.command("cmd.exe", "/c", command);
+            boolean isWindows = os.contains("win");
+            
+            if (isWindows) {
+                pb.command("cmd.exe", "/c", "chcp 65001 >nul & " + command);
             } else {
                 pb.command("sh", "-c", command);
             }
             
             process = pb.start();
             
+            Charset charset = isWindows ? Charset.forName("UTF-8") : StandardCharsets.UTF_8;
+            
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                    new InputStreamReader(process.getInputStream(), charset))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     output.append(line).append("\n");

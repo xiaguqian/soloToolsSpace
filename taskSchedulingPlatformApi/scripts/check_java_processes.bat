@@ -23,27 +23,29 @@ echo ==================================================
 
 for /f "tokens=2" %%a in ('tasklist /FI "IMAGENAME eq java.exe" /FO LIST ^| find "PID:"') do (
     set PID=%%a
+    set MAIN_CLASS=
     
-    for /f "tokens=* usebackq" %%b in (`jcmd !PID! VM.command_line 2^>nul ^| findstr /v /c:"VM.command_line" /c:"^$"`) do (
-        set CMD=%%b
-        set CMD=!CMD:~39!
+    for /f "tokens=*" %%b in ('jcmd !PID! VM.command_line 2^>nul ^| findstr /v /c:"VM.command_line" /c:"^$"') do (
+        set "CMD=%%b"
+        set "CMD=!CMD:~39!"
         for %%c in (!CMD!) do (
-            set MAIN_CLASS=%%c
-            goto :print_process
+            if "!MAIN_CLASS!"=="" (
+                set "MAIN_CLASS=%%c"
+            )
         )
     )
-    :print_process
+    
     if "!MAIN_CLASS!"=="" (
-        for /f "tokens=* usebackq" %%d in (`jcmd !PID! MainClass 2^>nul ^| findstr /v /c:"MainClass" /c:"^$"`) do (
-            set MAIN_CLASS=%%d
+        for /f "tokens=*" %%d in ('jcmd !PID! MainClass 2^>nul ^| findstr /v /c:"MainClass" /c:"^$"') do (
+            set "MAIN_CLASS=%%d"
         )
     )
+    
     if "!MAIN_CLASS!"=="" (
-        set MAIN_CLASS=(未知)
+        set "MAIN_CLASS=(未知)"
     )
     
     echo !PID!        !MAIN_CLASS!
-    set MAIN_CLASS=
 )
 
 echo ==================================================
@@ -51,15 +53,14 @@ echo.
 
 echo [3/4] Java进程资源占用情况:
 echo ==================================================
-echo PID        CPU(%%)    内存(KB)    状态
+echo PID        内存(KB)    状态
 echo ==================================================
 
-for /f "skip=3 tokens=2,5" %%a in ('tasklist /FI "IMAGENAME eq java.exe" /FO CSV ^| find /v "映像名称"') do (
-    set PID=%%~a
-    set MEM=%%~b
-    set MEM=!MEM:,=!
-    
-    echo !PID!        (待续)     !MEM!    运行中
+for /f "skip=3 tokens=2,5 delims=," %%a in ('tasklist /FI "IMAGENAME eq java.exe" /FO CSV') do (
+    set "PID=%%~a"
+    set "MEM=%%~b"
+    set "MEM=!MEM:,=!"
+    echo !PID!        !MEM!    运行中
 )
 
 echo ==================================================
