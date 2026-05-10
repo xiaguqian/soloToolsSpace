@@ -5,6 +5,7 @@ from typing import List, Optional
 import pandas as pd
 import io
 import json
+import uuid
 from datetime import datetime
 from ..database import get_db
 from .. import models, schemas
@@ -55,12 +56,6 @@ def create_data_record(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin)
 ):
-    existing = db.query(models.DataRecord).filter(models.DataRecord.unique_id == data.unique_id).first()
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="数据唯一ID已存在"
-        )
     dimension = db.query(models.Dimension).filter(
         models.Dimension.unique_id == data.dimension_unique_id
     ).first()
@@ -71,7 +66,7 @@ def create_data_record(
         )
     category = get_or_create_category(db, data.category_name)
     record = models.DataRecord(
-        unique_id=data.unique_id,
+        unique_id=str(uuid.uuid4()).replace("-", "")[:16].upper(),
         data_name=data.data_name,
         dimension_id=dimension.id,
         dimension_value=data.dimension_value,
@@ -97,10 +92,6 @@ def create_batch_records(
     errors = []
     for i, data in enumerate(records):
         try:
-            existing = db.query(models.DataRecord).filter(models.DataRecord.unique_id == data.unique_id).first()
-            if existing:
-                errors.append(f"第{i+1}条: 数据唯一ID {data.unique_id} 已存在")
-                continue
             dimension = db.query(models.Dimension).filter(
                 models.Dimension.unique_id == data.dimension_unique_id
             ).first()
@@ -109,7 +100,7 @@ def create_batch_records(
                 continue
             category = get_or_create_category(db, data.category_name)
             record = models.DataRecord(
-                unique_id=data.unique_id,
+                unique_id=str(uuid.uuid4()).replace("-", "")[:16].upper(),
                 data_name=data.data_name,
                 dimension_id=dimension.id,
                 dimension_value=data.dimension_value,
@@ -140,7 +131,7 @@ async def import_csv(
         df = pd.read_csv(io.BytesIO(contents))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"CSV解析失败: {str(e)}")
-    required_columns = ['unique_id', 'data_name', 'dimension_unique_id', 'dimension_value', 'value', 'unit', 'data_date']
+    required_columns = ['data_name', 'dimension_unique_id', 'dimension_value', 'value', 'unit', 'data_date']
     for col in required_columns:
         if col not in df.columns:
             raise HTTPException(status_code=400, detail=f"缺少必要列: {col}")
@@ -148,10 +139,6 @@ async def import_csv(
     errors = []
     for index, row in df.iterrows():
         try:
-            existing = db.query(models.DataRecord).filter(models.DataRecord.unique_id == str(row['unique_id'])).first()
-            if existing:
-                errors.append(f"第{index+2}行: 数据唯一ID {row['unique_id']} 已存在")
-                continue
             dimension = db.query(models.Dimension).filter(
                 models.Dimension.unique_id == str(row['dimension_unique_id'])
             ).first()
@@ -161,7 +148,7 @@ async def import_csv(
             category_name = row.get('category_name')
             category = get_or_create_category(db, str(category_name) if pd.notna(category_name) else None)
             record = models.DataRecord(
-                unique_id=str(row['unique_id']),
+                unique_id=str(uuid.uuid4()).replace("-", "")[:16].upper(),
                 data_name=str(row['data_name']),
                 dimension_id=dimension.id,
                 dimension_value=str(row['dimension_value']),
@@ -198,10 +185,6 @@ async def import_json(
     errors = []
     for i, item in enumerate(data_list):
         try:
-            existing = db.query(models.DataRecord).filter(models.DataRecord.unique_id == str(item['unique_id'])).first()
-            if existing:
-                errors.append(f"第{i+1}条: 数据唯一ID {item['unique_id']} 已存在")
-                continue
             dimension = db.query(models.Dimension).filter(
                 models.Dimension.unique_id == str(item['dimension_unique_id'])
             ).first()
@@ -210,7 +193,7 @@ async def import_json(
                 continue
             category = get_or_create_category(db, item.get('category_name'))
             record = models.DataRecord(
-                unique_id=str(item['unique_id']),
+                unique_id=str(uuid.uuid4()).replace("-", "")[:16].upper(),
                 data_name=str(item['data_name']),
                 dimension_id=dimension.id,
                 dimension_value=str(item['dimension_value']),

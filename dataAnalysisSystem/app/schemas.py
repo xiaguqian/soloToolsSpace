@@ -34,7 +34,6 @@ class TokenData(BaseModel):
 
 
 class DimensionBase(BaseModel):
-    unique_id: str
     english_name: str
     display_name: str
     default_unit: Optional[str] = None
@@ -54,6 +53,7 @@ class DimensionUpdate(BaseModel):
 
 class DimensionResponse(DimensionBase):
     id: int
+    unique_id: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -110,7 +110,6 @@ class DataCategoryResponse(DataCategoryBase):
 
 
 class DataRecordBase(BaseModel):
-    unique_id: str
     data_name: str
     dimension_unique_id: str
     dimension_value: str

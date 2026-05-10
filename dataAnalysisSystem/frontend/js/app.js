@@ -60,7 +60,6 @@ createApp({
         const showDataModal = ref(false);
         const showImportModal = ref(false);
         const dataForm = ref({
-            unique_id: '',
             data_name: '',
             dimension_unique_id: '',
             dimension_value: '',
@@ -76,7 +75,6 @@ createApp({
         const dimensions = ref([]);
         const showDimensionModal = ref(false);
         const dimensionForm = ref({
-            unique_id: '',
             english_name: '',
             display_name: '',
             default_unit: '',
@@ -407,7 +405,6 @@ createApp({
                 });
                 showDataModal.value = false;
                 dataForm.value = {
-                    unique_id: '',
                     data_name: '',
                     dimension_unique_id: '',
                     dimension_value: '',
@@ -511,7 +508,6 @@ createApp({
                 });
                 showDimensionModal.value = false;
                 dimensionForm.value = {
-                    unique_id: '',
                     english_name: '',
                     display_name: '',
                     default_unit: '',

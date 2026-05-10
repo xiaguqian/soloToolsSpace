@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 from ..database import get_db
 from .. import models, schemas
 from ..auth import get_current_active_user, require_admin
@@ -39,15 +40,17 @@ def create_dimension(
     current_user: models.User = Depends(require_admin)
 ):
     existing = db.query(models.Dimension).filter(
-        (models.Dimension.unique_id == dimension_data.unique_id) |
-        (models.Dimension.english_name == dimension_data.english_name)
+        models.Dimension.english_name == dimension_data.english_name
     ).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="维度唯一标识或英文名已存在"
+            detail="维度英文名已存在"
         )
-    dimension = models.Dimension(**dimension_data.dict())
+    dimension = models.Dimension(
+        unique_id=str(uuid.uuid4()).replace("-", "")[:12].upper(),
+        **dimension_data.dict()
+    )
     db.add(dimension)
     db.commit()
     db.refresh(dimension)

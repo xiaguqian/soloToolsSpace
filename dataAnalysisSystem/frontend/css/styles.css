@@ -16,14 +16,18 @@
 }
 
 [data-theme="dark"] {
-    --bg-color: #1a1a2e;
-    --card-bg: #16213e;
-    --text-color: #e4e4e4;
-    --text-secondary: #a0a0a0;
-    --border-color: #2d3748;
-    --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-    --primary-color: #667eea;
-    --primary-hover: #5a6fd8;
+    --bg-color: #2d3748;
+    --card-bg: #4a5568;
+    --text-color: #f7fafc;
+    --text-secondary: #cbd5e0;
+    --border-color: #718096;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    --primary-color: #63b3ed;
+    --primary-hover: #4299e1;
+    --secondary-color: #a0aec0;
+    --danger-color: #fc8181;
+    --success-color: #68d391;
+    --warning-color: #f6ad55;
 }
 
 [data-theme="blue"] {

@@ -2,9 +2,12 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from app.database import Base, engine, SessionLocal
-from app.auth import create_default_admin
+from app.database import Base, engine, SessionLocal, get_db
+from app.auth import create_default_admin, require_admin
+from app.init_db import init_sample_data
 from app.routers import auth, dimensions, data, conversion, analysis
+from app import models
+from fastapi import Depends
 import os
 
 Base.metadata.create_all(bind=engine)
@@ -12,6 +15,7 @@ Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 try:
     create_default_admin(db)
+    init_sample_data(db)
 finally:
     db.close()
 
@@ -55,6 +59,19 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "version": "1.0.0"}
+
+
+@app.post("/api/reset-data")
+def reset_data(db=Depends(get_db), current_user=Depends(require_admin)):
+    from app.init_db import init_sample_data
+    db.query(models.DataRecord).delete()
+    db.query(models.DataCategory).delete()
+    db.query(models.ConversionRule).delete()
+    db.query(models.Dimension).filter(models.Dimension.english_name != 'region').delete()
+    db.query(models.Dimension).filter(models.Dimension.english_name == 'region').delete()
+    db.commit()
+    init_sample_data(db)
+    return {"message": "数据已重置并重新初始化"}
 
 
 if __name__ == "__main__":
