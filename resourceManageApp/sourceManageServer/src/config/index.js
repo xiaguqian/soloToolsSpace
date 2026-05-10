@@ -43,7 +43,7 @@ module.exports = {
   },
   
   storage: {
-    path: process.env.STORAGE_PATH || './uploads',
+    path: path.resolve(process.env.STORAGE_PATH || path.join(__dirname, '../../uploads')),
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 52428800
   },
   
