@@ -126,7 +126,7 @@ class DesktopExecutor:
     def _key_press(self, params):
         key = params.get('key')
         if key:
-            pyautogui.keyDown(key)
+            pyautogui.press(key)
         return {'success': True, 'action': 'key_press', 'key': key}
     
     def _key_release(self, params):
@@ -137,13 +137,15 @@ class DesktopExecutor:
     
     def _key_type(self, params):
         text = params.get('text', '')
-        interval = params.get('interval', 0.0)
+        interval = params.get('interval', 0.1)
         pyautogui.typewrite(text, interval=interval)
         return {'success': True, 'action': 'key_type', 'text': text}
     
     def _hotkey(self, params):
         keys = params.get('keys', [])
         if keys:
+            if isinstance(keys, str):
+                keys = [k.strip() for k in keys.split(',')]
             pyautogui.hotkey(*keys)
         return {'success': True, 'action': 'hotkey', 'keys': keys}
     
