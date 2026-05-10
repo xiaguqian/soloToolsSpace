@@ -32,11 +32,11 @@ public class ShellExecutor {
             return securityCheck;
         }
         
+        int timeout = timeoutSeconds > 0 ? timeoutSeconds : shellProperties.getTimeoutSeconds();
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<TaskExecutionResult> future = executor.submit(() -> runCommand(resolvedCommand));
         
         try {
-            int timeout = timeoutSeconds > 0 ? timeoutSeconds : shellProperties.getTimeoutSeconds();
             return future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             future.cancel(true);

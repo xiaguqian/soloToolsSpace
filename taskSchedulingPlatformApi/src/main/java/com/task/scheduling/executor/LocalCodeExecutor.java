@@ -62,6 +62,7 @@ public class LocalCodeExecutor {
                     .build();
         }
         
+        int timeout = timeoutSeconds > 0 ? timeoutSeconds : 60;
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<TaskExecutionResult> future = executor.submit(() -> {
             try {
@@ -87,7 +88,6 @@ public class LocalCodeExecutor {
         });
         
         try {
-            int timeout = timeoutSeconds > 0 ? timeoutSeconds : 60;
             return future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             future.cancel(true);

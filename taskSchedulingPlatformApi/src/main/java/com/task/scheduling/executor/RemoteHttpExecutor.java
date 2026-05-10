@@ -26,6 +26,7 @@ public class RemoteHttpExecutor {
         String resolvedUrl = templateResolver.resolve(commandDetail, jobId, parameters);
         Map<String, Object> resolvedParams = templateResolver.resolveMap(parameters, jobId);
         
+        int timeout = timeoutSeconds > 0 ? timeoutSeconds : 60;
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<TaskExecutionResult> future = executor.submit(() -> {
             try {
@@ -62,7 +63,6 @@ public class RemoteHttpExecutor {
         });
         
         try {
-            int timeout = timeoutSeconds > 0 ? timeoutSeconds : 60;
             return future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             future.cancel(true);
