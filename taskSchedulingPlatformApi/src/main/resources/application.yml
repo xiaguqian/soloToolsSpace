@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: task-scheduling-platform
+
+task:
+  executor:
+    core-pool-size: 10
+    max-pool-size: 20
+    queue-capacity: 100
+    keep-alive-seconds: 60
+  
+  shell:
+    trusted-dir: /opt/executor/scripts/
+    timeout-seconds: 60
+    blacklist:
+      - rm -rf /
+      - mkfs
+      - mke2fs
+      - dd if=/dev/zero
+      - :(){ :|:& };
+      - chmod 777 /
+      - shutdown
+      - reboot
+      - halt
+      - poweroff
+    allowed-user: executor
+  
+  system:
+    temp-dir: /tmp
