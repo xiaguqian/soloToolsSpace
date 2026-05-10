@@ -806,12 +806,12 @@
             }
             
             try {
-                const response = await fetch(`/api/execution/schedule/${scheduleId}/run`, {
+                const response = await fetch(`/api/execution/schedule/${scheduleId}/run-now`, {
                     method: 'POST'
                 });
                 const result = await response.json();
                 if (result.success) {
-                    alert('日程已提交执行，请在执行监控中查看状态');
+                    alert(result.message);
                 } else {
                     alert('执行失败: ' + result.message);
                 }

@@ -4,13 +4,27 @@ import pytesseract
 from PIL import Image
 import numpy as np
 import cv2
+import sys
+import os
 from app.config import Config
 from app.database import StepType
 
 class DesktopExecutor:
     def __init__(self):
+        if sys.platform == 'win32':
+            try:
+                import ctypes
+                PROCESS_PER_MONITOR_DPI_AWARE = 2
+                ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
+            except Exception:
+                try:
+                    import ctypes
+                    ctypes.windll.user32.SetProcessDPIAware()
+                except Exception:
+                    pass
+        
         pyautogui.FAILSAFE = True
-        pyautogui.PAUSE = 0.1
+        pyautogui.PAUSE = 0.15
         pytesseract.pytesseract.tesseract_cmd = Config.TESSERACT_PATH
     
     def execute_step(self, step):
@@ -49,14 +63,20 @@ class DesktopExecutor:
         x = params.get('x')
         y = params.get('y')
         button = params.get('button', 'left')
-        clicks = params.get('clicks', 1)
-        interval = params.get('interval', 0.0)
+        clicks = int(params.get('clicks', 1))
+        interval = float(params.get('interval', 0.1))
         
         if x is not None and y is not None:
+            x = int(x)
+            y = int(y)
+            pyautogui.moveTo(x=x, y=y, duration=0.2)
+            time.sleep(0.1)
             pyautogui.click(x=x, y=y, button=button, clicks=clicks, interval=interval)
+            actual_pos = pyautogui.position()
+            return {'success': True, 'action': 'mouse_click', 'target': (x, y), 'actual': (actual_pos.x, actual_pos.y)}
         else:
             pyautogui.click(button=button, clicks=clicks, interval=interval)
-        return {'success': True, 'action': 'mouse_click'}
+            return {'success': True, 'action': 'mouse_click'}
     
     def _mouse_double_click(self, params):
         x = params.get('x')
@@ -64,30 +84,44 @@ class DesktopExecutor:
         button = params.get('button', 'left')
         
         if x is not None and y is not None:
+            x = int(x)
+            y = int(y)
+            pyautogui.moveTo(x=x, y=y, duration=0.2)
+            time.sleep(0.1)
             pyautogui.doubleClick(x=x, y=y, button=button)
+            actual_pos = pyautogui.position()
+            return {'success': True, 'action': 'mouse_double_click', 'target': (x, y), 'actual': (actual_pos.x, actual_pos.y)}
         else:
             pyautogui.doubleClick(button=button)
-        return {'success': True, 'action': 'mouse_double_click'}
+            return {'success': True, 'action': 'mouse_double_click'}
     
     def _mouse_move(self, params):
         x = params.get('x')
         y = params.get('y')
-        duration = params.get('duration', 0.0)
+        duration = float(params.get('duration', 0.2))
         
         if x is not None and y is not None:
+            x = int(x)
+            y = int(y)
             pyautogui.moveTo(x=x, y=y, duration=duration)
+            actual_pos = pyautogui.position()
+            return {'success': True, 'action': 'mouse_move', 'target': (x, y), 'actual': (actual_pos.x, actual_pos.y)}
         return {'success': True, 'action': 'mouse_move', 'position': (x, y)}
     
     def _mouse_scroll(self, params):
-        clicks = params.get('clicks', 0)
+        clicks = int(params.get('clicks', 0))
         x = params.get('x')
         y = params.get('y')
         
         if x is not None and y is not None:
+            x = int(x)
+            y = int(y)
+            pyautogui.moveTo(x=x, y=y, duration=0.2)
+            time.sleep(0.1)
             pyautogui.scroll(clicks=clicks, x=x, y=y)
         else:
             pyautogui.scroll(clicks=clicks)
-        return {'success': True, 'action': 'mouse_scroll'}
+        return {'success': True, 'action': 'mouse_scroll', 'clicks': clicks}
     
     def _key_press(self, params):
         key = params.get('key')
