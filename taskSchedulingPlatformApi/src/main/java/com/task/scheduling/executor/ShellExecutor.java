@@ -4,18 +4,22 @@ import com.task.scheduling.config.ShellProperties;
 import com.task.scheduling.dto.TaskExecutionResult;
 import com.task.scheduling.enums.TaskStatus;
 import com.task.scheduling.util.TemplateResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.*;
 
 @Component
 public class ShellExecutor {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ShellExecutor.class);
     
     private final ShellProperties shellProperties;
     private final TemplateResolver templateResolver;
@@ -27,20 +31,27 @@ public class ShellExecutor {
     
     public TaskExecutionResult execute(String command, String jobId, Map<String, Object> parameters, int timeoutSeconds) {
         String resolvedCommand = templateResolver.resolve(command, jobId, parameters);
+        logger.info("准备执行Shell命令: {}", resolvedCommand);
         
         TaskExecutionResult securityCheck = checkSecurity(resolvedCommand);
         if (securityCheck != null) {
+            logger.warn("安全检查失败: {}", securityCheck.getErrorMessage());
             return securityCheck;
         }
         
         int timeout = timeoutSeconds > 0 ? timeoutSeconds : shellProperties.getTimeoutSeconds();
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<TaskExecutionResult> future = executor.submit(() -> runCommand(resolvedCommand));
+        
+        final String finalCommand = resolvedCommand;
+        Future<TaskExecutionResult> future = executor.submit(() -> runCommand(finalCommand));
         
         try {
-            return future.get(timeout, TimeUnit.SECONDS);
+            TaskExecutionResult result = future.get(timeout, TimeUnit.SECONDS);
+            logger.info("命令执行完成，状态: {}, 退出码: {}", result.getStatus(), result.getExitCode());
+            return result;
         } catch (TimeoutException e) {
             future.cancel(true);
+            logger.warn("命令执行超时: {}秒", timeout);
             return TaskExecutionResult.builder()
                     .status(TaskStatus.TIMEOUT)
                     .output("")
@@ -48,6 +59,7 @@ public class ShellExecutor {
                     .exitCode(-1)
                     .build();
         } catch (Exception e) {
+            logger.error("命令执行异常", e);
             return TaskExecutionResult.builder()
                     .status(TaskStatus.FAILED)
                     .output("")
@@ -91,28 +103,6 @@ public class ShellExecutor {
                                 " 系统仅允许执行 " + allowedExts + " 文件，当前文件: " + executable)
                         .exitCode(-1)
                         .build();
-            }
-        }
-        
-        String trustedDir = shellProperties.getTrustedDir();
-        if (trustedDir != null && !trustedDir.isEmpty()) {
-            String trimmedDir = trustedDir.endsWith("/") ? trustedDir : trustedDir + "/";
-            boolean startsWithTrusted = command.startsWith(trimmedDir);
-            boolean usesTrustedInPath = command.contains(trimmedDir);
-            
-            if (!startsWithTrusted && !usesTrustedInPath) {
-                File scriptFile = new File(command.split("\\s+")[0]);
-                if (!scriptFile.isAbsolute()) {
-                    scriptFile = new File(trustedDir, scriptFile.getName());
-                }
-                if (!scriptFile.getAbsolutePath().startsWith(new File(trustedDir).getAbsolutePath())) {
-                    return TaskExecutionResult.builder()
-                            .status(TaskStatus.SECURITY_REJECTED)
-                            .output("")
-                            .errorMessage("安全检查失败: 脚本必须位于受信任目录 " + trustedDir)
-                            .exitCode(-1)
-                            .build();
-                }
             }
         }
         
@@ -175,7 +165,9 @@ public class ShellExecutor {
                    lower.equals("find") || lower.equals("findstr") || lower.equals("sort") ||
                    lower.equals("more") || lower.equals("chcp") || lower.equals("ver") ||
                    lower.equals("cmd.exe") || lower.equals("cmd") ||
-                   lower.equals("powershell.exe") || lower.equals("powershell");
+                   lower.equals("powershell.exe") || lower.equals("powershell") ||
+                   lower.equals("java") || lower.equals("javac") || lower.equals("jcmd") ||
+                   lower.equals("jps") || lower.equals("jstat") || lower.equals("jmap");
         } else {
             return lower.equals("echo") || lower.equals("ls") || lower.equals("cd") ||
                    lower.equals("pwd") || lower.equals("cat") || lower.equals("grep") ||
@@ -188,28 +180,44 @@ public class ShellExecutor {
                    lower.equals("date") || lower.equals("uptime") || lower.equals("who") ||
                    lower.equals("which") || lower.equals("whereis") || lower.equals("whatis") ||
                    lower.equals("sh") || lower.equals("bash") || lower.equals("/bin/sh") ||
-                   lower.equals("/bin/bash") || lower.equals("/usr/bin/env");
+                   lower.equals("/bin/bash") || lower.equals("/usr/bin/env") ||
+                   lower.equals("java") || lower.equals("javac") || lower.equals("jcmd") ||
+                   lower.equals("jps") || lower.equals("jstat") || lower.equals("jmap");
         }
     }
     
     private TaskExecutionResult runCommand(String command) {
         Process process = null;
         try {
-            ProcessBuilder pb = new ProcessBuilder();
-            pb.redirectErrorStream(true);
-            
             String os = System.getProperty("os.name").toLowerCase();
             boolean isWindows = os.contains("win");
             
+            ProcessBuilder pb = new ProcessBuilder();
+            pb.redirectErrorStream(true);
+            
+            String workingDir = System.getProperty("user.dir");
+            File scriptFile = resolveScriptFile(command, workingDir, isWindows);
+            if (scriptFile != null) {
+                pb.directory(scriptFile.getParentFile());
+                logger.info("设置工作目录: {}", scriptFile.getParentFile().getAbsolutePath());
+            }
+            
             if (isWindows) {
-                pb.command("cmd.exe", "/c", "chcp 65001 >nul & " + command);
+                String actualCommand = command;
+                if (scriptFile != null && scriptFile.exists()) {
+                    actualCommand = "\"" + scriptFile.getAbsolutePath() + "\"" + 
+                            extractArguments(command, isWindows);
+                }
+                logger.info("Windows执行命令: {}", actualCommand);
+                pb.command("cmd.exe", "/c", actualCommand);
             } else {
                 pb.command("sh", "-c", command);
             }
             
             process = pb.start();
             
-            Charset charset = isWindows ? Charset.forName("UTF-8") : StandardCharsets.UTF_8;
+            Charset charset = getSystemCharset(isWindows);
+            logger.debug("使用编码: {}", charset.name());
             
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
@@ -221,6 +229,7 @@ public class ShellExecutor {
             }
             
             int exitCode = process.waitFor();
+            logger.debug("进程退出码: {}", exitCode);
             
             String outputStr = output.toString();
             if (outputStr.length() > 10000) {
@@ -235,10 +244,11 @@ public class ShellExecutor {
                     .build();
                     
         } catch (Exception e) {
+            logger.error("命令执行异常", e);
             return TaskExecutionResult.builder()
                     .status(TaskStatus.FAILED)
                     .output("")
-                    .errorMessage("执行异常: " + e.getMessage())
+                    .errorMessage("执行异常: " + e.getClass().getSimpleName() + " - " + e.getMessage())
                     .exitCode(-1)
                     .build();
         } finally {
@@ -246,5 +256,109 @@ public class ShellExecutor {
                 process.destroyForcibly();
             }
         }
+    }
+    
+    private File resolveScriptFile(String command, String workingDir, boolean isWindows) {
+        if (command == null || command.trim().isEmpty()) {
+            return null;
+        }
+        
+        String[] parts = command.trim().split("\\s+");
+        if (parts.length == 0) {
+            return null;
+        }
+        
+        String firstPart = parts[0];
+        
+        if (isWindows) {
+            if (firstPart.equalsIgnoreCase("cmd.exe") || 
+                firstPart.equalsIgnoreCase("cmd") ||
+                firstPart.equalsIgnoreCase("powershell.exe") ||
+                firstPart.equalsIgnoreCase("powershell")) {
+                if (parts.length >= 3) {
+                    return findScriptFile(parts[2], workingDir, isWindows);
+                }
+                return null;
+            }
+        } else {
+            if (firstPart.equalsIgnoreCase("sh") || 
+                firstPart.equalsIgnoreCase("bash") ||
+                firstPart.equalsIgnoreCase("/bin/sh") ||
+                firstPart.equalsIgnoreCase("/bin/bash")) {
+                if (parts.length >= 2) {
+                    return findScriptFile(parts[1], workingDir, isWindows);
+                }
+                return null;
+            }
+        }
+        
+        return findScriptFile(firstPart, workingDir, isWindows);
+    }
+    
+    private File findScriptFile(String scriptPath, String workingDir, boolean isWindows) {
+        if (scriptPath == null || scriptPath.isEmpty()) {
+            return null;
+        }
+        
+        scriptPath = scriptPath.replace("\"", "").replace("'", "");
+        
+        Path path = Paths.get(scriptPath);
+        if (path.isAbsolute()) {
+            File file = path.toFile();
+            if (file.exists()) {
+                return file;
+            }
+        }
+        
+        File relativeToWorkDir = new File(workingDir, scriptPath);
+        if (relativeToWorkDir.exists()) {
+            return relativeToWorkDir.getAbsoluteFile();
+        }
+        
+        File relativeToScripts = new File(workingDir, "scripts/" + scriptPath);
+        if (relativeToScripts.exists()) {
+            return relativeToScripts.getAbsoluteFile();
+        }
+        
+        String scriptName = new File(scriptPath).getName();
+        File inScriptsDir = new File(workingDir, "scripts/" + scriptName);
+        if (inScriptsDir.exists()) {
+            return inScriptsDir.getAbsoluteFile();
+        }
+        
+        return new File(scriptPath);
+    }
+    
+    private String extractArguments(String command, boolean isWindows) {
+        if (command == null || command.trim().isEmpty()) {
+            return "";
+        }
+        
+        String[] parts = command.trim().split("\\s+");
+        if (parts.length <= 1) {
+            return "";
+        }
+        
+        StringBuilder args = new StringBuilder();
+        for (int i = 1; i < parts.length; i++) {
+            args.append(" ").append(parts[i]);
+        }
+        return args.toString();
+    }
+    
+    private Charset getSystemCharset(boolean isWindows) {
+        if (isWindows) {
+            try {
+                String codePage = System.getProperty("sun.jnu.encoding");
+                if (codePage != null && !codePage.isEmpty()) {
+                    logger.debug("系统编码: {}", codePage);
+                    return Charset.forName(codePage);
+                }
+            } catch (Exception e) {
+                logger.debug("获取系统编码失败，使用默认编码");
+            }
+            return Charset.defaultCharset();
+        }
+        return Charset.defaultCharset();
     }
 }
