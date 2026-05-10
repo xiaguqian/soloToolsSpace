@@ -8,20 +8,20 @@
     >
       <VueFlow
         ref="vueFlowRef"
-        v-model:nodes="internalNodes"
-        v-model:edges="internalEdges"
+        :nodes="nodes"
+        :edges="edges"
         :node-types="nodeTypes"
         :default-edge-options="defaultEdgeOptions"
         :pro-options="proOptions"
-        :fit-view-on-init="true"
+        :fit-view-on-init="false"
         :snap-to-grid="true"
         :snap-grid="gridSnap"
         :min-zoom="0.1"
         :max-zoom="4"
         @connect="onConnect"
-        @view-port-change="onViewportChange"
         @nodes-change="onNodesChange"
         @edges-change="onEdgesChange"
+        @view-port-change="onViewportChange"
       >
         <template #background>
           <Background
@@ -48,14 +48,14 @@
     
     <div class="canvas-info">
       <span>缩放: {{ Math.round(viewport.zoom * 100) }}%</span>
-      <span>节点: {{ internalNodes.length }}</span>
-      <span>连线: {{ internalEdges.length }}</span>
+      <span>节点: {{ nodes.length }}</span>
+      <span>连线: {{ edges.length }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -89,8 +89,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'update:nodes',
-  'update:edges',
+  'addNode',
+  'addEdge',
+  'updateNodes',
+  'updateEdges',
   'viewportChange',
   'nodesChange',
   'edgesChange'
@@ -99,23 +101,9 @@ const emit = defineEmits([
 const vueFlowRef = ref(null)
 const canvasContainer = ref(null)
 const dropArea = ref(null)
-const internalNodes = ref([])
-const internalEdges = ref([])
 const viewport = ref({ x: 0, y: 0, zoom: 1 })
 
-const { addNodes, addEdges, screenToFlowPosition, fitView } = useVueFlow()
-
-watch(() => props.nodes, (newNodes) => {
-  if (newNodes && newNodes.length > 0) {
-    internalNodes.value = JSON.parse(JSON.stringify(newNodes))
-  }
-}, { deep: true })
-
-watch(() => props.edges, (newEdges) => {
-  if (newEdges && newEdges.length > 0) {
-    internalEdges.value = JSON.parse(JSON.stringify(newEdges))
-  }
-}, { deep: true })
+const { screenToFlowPosition, fitView } = useVueFlow()
 
 const gridSnap = computed(() => ({ x: props.gridSize, y: props.gridSize }))
 
@@ -167,7 +155,6 @@ const getDefaultNodeData = (type, label) => {
 }
 
 const onConnect = (params) => {
-  console.log('Connect:', params)
   const newEdge = {
     id: generateId(),
     ...params,
@@ -180,7 +167,7 @@ const onConnect = (params) => {
       arrowType: 'single'
     }
   }
-  addEdges(newEdge)
+  emit('addEdge', newEdge)
 }
 
 const onDragOver = (event) => {
@@ -189,10 +176,11 @@ const onDragOver = (event) => {
 }
 
 const onDrop = (event) => {
-  console.log('Drop event:', event)
+  let transferData = event.dataTransfer.getData('application/vueflow')
   
-  const transferData = event.dataTransfer.getData('application/vueflow')
-  console.log('Transfer data:', transferData)
+  if (!transferData) {
+    transferData = event.dataTransfer.getData('text/plain')
+  }
   
   if (!transferData) {
     return
@@ -200,14 +188,11 @@ const onDrop = (event) => {
   
   try {
     const data = JSON.parse(transferData)
-    console.log('Parsed data:', data)
     
     const position = screenToFlowPosition({
       x: event.clientX,
       y: event.clientY
     })
-    
-    console.log('Flow position:', position)
     
     const newNode = {
       id: generateId(),
@@ -220,21 +205,17 @@ const onDrop = (event) => {
       }
     }
     
-    console.log('New node:', newNode)
-    addNodes(newNode)
-    console.log('Nodes after add:', internalNodes.value)
+    emit('addNode', newNode)
   } catch (error) {
     console.error('Error adding node:', error)
   }
 }
 
 const onNodesChange = (changes) => {
-  console.log('Nodes change:', changes)
   emit('nodesChange', changes)
 }
 
 const onEdgesChange = (changes) => {
-  console.log('Edges change:', changes)
   emit('edgesChange', changes)
 }
 
@@ -246,8 +227,6 @@ const onViewportChange = (vp) => {
 defineExpose({
   fitView: () => fitView(),
   getViewport: () => viewport.value,
-  getNodes: () => internalNodes.value,
-  getEdges: () => internalEdges.value,
   exportAsImage: async (type = 'png') => {
     return new Promise((resolve, reject) => {
       import('html-to-image').then(({ toPng, toJpeg, toSvg }) => {
@@ -269,19 +248,6 @@ defineExpose({
         }
       }).catch(reject)
     })
-  }
-})
-
-onMounted(() => {
-  console.log('FlowCanvas mounted')
-  console.log('Props nodes:', props.nodes)
-  console.log('Props edges:', props.edges)
-  
-  if (props.nodes && props.nodes.length > 0) {
-    addNodes(JSON.parse(JSON.stringify(props.nodes)))
-  }
-  if (props.edges && props.edges.length > 0) {
-    addEdges(JSON.parse(JSON.stringify(props.edges)))
   }
 })
 </script>

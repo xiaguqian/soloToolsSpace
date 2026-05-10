@@ -107,37 +107,40 @@ export const exampleFlows = [
 
 export const addExampleEdges = (nodes) => {
   const edges = []
-  for (let i = 0; i < nodes.length - 1; i++) {
-    if (i === 2) {
-      edges.push({
-        id: `edge-${i}-${i + 1}`,
-        source: nodes[i].id,
-        target: nodes[i + 2].id,
-        type: 'smoothstep',
-        animated: false,
-        data: { label: '是', lineWidth: 2, color: '#64748b', arrowType: 'single' }
-      })
-      edges.push({
-        id: `edge-${i}-branch`,
-        source: nodes[i].id,
-        target: nodes[i + 1].id,
-        type: 'smoothstep',
-        animated: false,
-        data: { label: '否', lineWidth: 2, color: '#ef4444', arrowType: 'single' },
-        sourceHandle: 'right',
-        targetHandle: 'left'
-      })
-      i++
-    } else {
-      edges.push({
-        id: `edge-${i}-${i + 1}`,
-        source: nodes[i].id,
-        target: nodes[i + 1].id,
-        type: 'smoothstep',
-        animated: false,
-        data: { lineWidth: 2, color: '#64748b', arrowType: 'single' }
-      })
-    }
+  
+  const addEdge = (sourceIdx, targetIdx, options = {}) => {
+    const sourceNode = nodes[sourceIdx]
+    const targetNode = nodes[targetIdx]
+    
+    if (!sourceNode || !targetNode) return
+    
+    edges.push({
+      id: generateId(),
+      source: sourceNode.id,
+      target: targetNode.id,
+      type: 'smoothstep',
+      animated: false,
+      markerEnd: { type: 'arrowclosed' },
+      data: {
+        label: options.label || '',
+        lineWidth: options.lineWidth || 2,
+        color: options.color || '#64748b',
+        arrowType: options.arrowType || 'single'
+      },
+      sourceHandle: options.sourceHandle,
+      targetHandle: options.targetHandle
+    })
   }
+  
+  if (nodes.length >= 6) {
+    addEdge(0, 1)
+    addEdge(1, 2)
+    
+    addEdge(2, 4, { label: '是' })
+    addEdge(2, 3, { label: '否', color: '#ef4444', sourceHandle: 'right', targetHandle: 'left' })
+    
+    addEdge(4, 5)
+  }
+  
   return edges
 }

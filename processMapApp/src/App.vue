@@ -32,10 +32,12 @@
       
       <FlowCanvas
         ref="canvasRef"
-        v-model:nodes="nodes"
-        v-model:edges="edges"
+        :nodes="nodes"
+        :edges="edges"
         :show-grid="showGrid"
         :grid-size="gridSize"
+        @add-node="handleAddNode"
+        @add-edge="handleAddEdge"
         @nodes-change="onNodesChange"
         @edges-change="onEdgesChange"
         @viewport-change="onViewportChange"
@@ -222,6 +224,18 @@ const onEdgesChange = () => {
 
 const onViewportChange = (vp) => {
   viewport.value = vp
+}
+
+const handleAddNode = (node) => {
+  console.log('Adding node:', node)
+  nodes.value = [...nodes.value, node]
+  saveToHistory()
+}
+
+const handleAddEdge = (edge) => {
+  console.log('Adding edge:', edge)
+  edges.value = [...edges.value, edge]
+  saveToHistory()
 }
 
 const handleCopy = async () => {
