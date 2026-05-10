@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from './views/Login.vue'
-import Layout from './views/Layout.vue'
-import Dashboard from './views/Dashboard.vue'
-import TaskList from './views/TaskList.vue'
-import LogList from './views/LogList.vue'
-import UserList from './views/UserList.vue'
+import Login from '../views/Login.vue'
+import Layout from '../views/Layout.vue'
+import Dashboard from '../views/Dashboard.vue'
+import TaskList from '../views/TaskList.vue'
+import LogList from '../views/LogList.vue'
+import UserList from '../views/UserList.vue'
 
 const routes = [
   {
