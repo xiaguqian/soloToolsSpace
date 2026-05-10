@@ -1,42 +1,50 @@
 <template>
   <div class="flow-canvas" ref="canvasContainer">
-    <VueFlow
-      ref="vueFlowRef"
-      v-model:nodes="internalNodes"
-      v-model:edges="internalEdges"
-      :node-types="nodeTypes"
-      :default-edge-options="defaultEdgeOptions"
-      :pro-options="proOptions"
-      :fit-view-on-init="true"
-      :snap-to-grid="true"
-      :snap-grid="gridSnap"
-      :min-zoom="0.1"
-      :max-zoom="4"
-      @connect="onConnect"
-      @node-drop="onNodeDrop"
-      @view-port-change="onViewportChange"
+    <div 
+      ref="dropArea"
+      class="drop-area"
+      @dragover.prevent="onDragOver"
+      @drop.prevent="onDrop"
     >
-      <template #background>
-        <Background
-          v-if="showGrid"
-          :gap="gridSize"
-          :size="1"
-          color="var(--border-color)"
-        />
-      </template>
-      
-      <template #controls>
-        <Controls :show-fit-view="false" />
-      </template>
-      
-      <template #minimap>
-        <MiniMap
-          node-stroke-color="var(--text-color)"
-          node-fill-color="var(--node-bg)"
-          mask-color="rgba(0, 0, 0, 0.1)"
-        />
-      </template>
-    </VueFlow>
+      <VueFlow
+        ref="vueFlowRef"
+        v-model:nodes="internalNodes"
+        v-model:edges="internalEdges"
+        :node-types="nodeTypes"
+        :default-edge-options="defaultEdgeOptions"
+        :pro-options="proOptions"
+        :fit-view-on-init="true"
+        :snap-to-grid="true"
+        :snap-grid="gridSnap"
+        :min-zoom="0.1"
+        :max-zoom="4"
+        @connect="onConnect"
+        @view-port-change="onViewportChange"
+        @nodes-change="onNodesChange"
+        @edges-change="onEdgesChange"
+      >
+        <template #background>
+          <Background
+            v-if="showGrid"
+            :gap="gridSize"
+            :size="1"
+            color="var(--border-color)"
+          />
+        </template>
+        
+        <template #controls>
+          <Controls :show-fit-view="false" />
+        </template>
+        
+        <template #minimap>
+          <MiniMap
+            node-stroke-color="var(--text-color)"
+            node-fill-color="var(--node-bg)"
+            mask-color="rgba(0, 0, 0, 0.1)"
+          />
+        </template>
+      </VueFlow>
+    </div>
     
     <div class="canvas-info">
       <span>缩放: {{ Math.round(viewport.zoom * 100) }}%</span>
@@ -47,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -83,31 +91,30 @@ const props = defineProps({
 const emit = defineEmits([
   'update:nodes',
   'update:edges',
-  'viewportChange'
+  'viewportChange',
+  'nodesChange',
+  'edgesChange'
 ])
 
 const vueFlowRef = ref(null)
 const canvasContainer = ref(null)
-const internalNodes = ref([...props.nodes])
-const internalEdges = ref([...props.edges])
+const dropArea = ref(null)
+const internalNodes = ref([])
+const internalEdges = ref([])
 const viewport = ref({ x: 0, y: 0, zoom: 1 })
 
-const { screenToFlowPosition, fitView } = useVueFlow()
+const { addNodes, addEdges, screenToFlowPosition, fitView } = useVueFlow()
 
 watch(() => props.nodes, (newNodes) => {
-  internalNodes.value = JSON.parse(JSON.stringify(newNodes))
+  if (newNodes && newNodes.length > 0) {
+    internalNodes.value = JSON.parse(JSON.stringify(newNodes))
+  }
 }, { deep: true })
 
 watch(() => props.edges, (newEdges) => {
-  internalEdges.value = JSON.parse(JSON.stringify(newEdges))
-}, { deep: true })
-
-watch(internalNodes, (newNodes) => {
-  emit('update:nodes', JSON.parse(JSON.stringify(newNodes)))
-}, { deep: true })
-
-watch(internalEdges, (newEdges) => {
-  emit('update:edges', JSON.parse(JSON.stringify(newEdges)))
+  if (newEdges && newEdges.length > 0) {
+    internalEdges.value = JSON.parse(JSON.stringify(newEdges))
+  }
 }, { deep: true })
 
 const gridSnap = computed(() => ({ x: props.gridSize, y: props.gridSize }))
@@ -160,6 +167,7 @@ const getDefaultNodeData = (type, label) => {
 }
 
 const onConnect = (params) => {
+  console.log('Connect:', params)
   const newEdge = {
     id: generateId(),
     ...params,
@@ -172,31 +180,62 @@ const onConnect = (params) => {
       arrowType: 'single'
     }
   }
-  internalEdges.value = [...internalEdges.value, newEdge]
+  addEdges(newEdge)
 }
 
-const onNodeDrop = (event) => {
+const onDragOver = (event) => {
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.dropEffect = 'move'
+}
+
+const onDrop = (event) => {
+  console.log('Drop event:', event)
+  
   const transferData = event.dataTransfer.getData('application/vueflow')
-  if (!transferData) return
+  console.log('Transfer data:', transferData)
   
-  const data = JSON.parse(transferData)
-  const position = screenToFlowPosition({
-    x: event.clientX,
-    y: event.clientY
-  })
-  
-  const newNode = {
-    id: generateId(),
-    type: data.type,
-    position,
-    data: getDefaultNodeData(data.type, data.label),
-    style: {
-      width: data.defaultSize.width,
-      height: data.defaultSize.height
-    }
+  if (!transferData) {
+    return
   }
   
-  internalNodes.value = [...internalNodes.value, newNode]
+  try {
+    const data = JSON.parse(transferData)
+    console.log('Parsed data:', data)
+    
+    const position = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY
+    })
+    
+    console.log('Flow position:', position)
+    
+    const newNode = {
+      id: generateId(),
+      type: data.type,
+      position,
+      data: getDefaultNodeData(data.type, data.label),
+      style: {
+        width: data.defaultSize.width,
+        height: data.defaultSize.height
+      }
+    }
+    
+    console.log('New node:', newNode)
+    addNodes(newNode)
+    console.log('Nodes after add:', internalNodes.value)
+  } catch (error) {
+    console.error('Error adding node:', error)
+  }
+}
+
+const onNodesChange = (changes) => {
+  console.log('Nodes change:', changes)
+  emit('nodesChange', changes)
+}
+
+const onEdgesChange = (changes) => {
+  console.log('Edges change:', changes)
+  emit('edgesChange', changes)
 }
 
 const onViewportChange = (vp) => {
@@ -232,6 +271,19 @@ defineExpose({
     })
   }
 })
+
+onMounted(() => {
+  console.log('FlowCanvas mounted')
+  console.log('Props nodes:', props.nodes)
+  console.log('Props edges:', props.edges)
+  
+  if (props.nodes && props.nodes.length > 0) {
+    addNodes(JSON.parse(JSON.stringify(props.nodes)))
+  }
+  if (props.edges && props.edges.length > 0) {
+    addEdges(JSON.parse(JSON.stringify(props.edges)))
+  }
+})
 </script>
 
 <style scoped>
@@ -239,6 +291,11 @@ defineExpose({
   flex: 1;
   position: relative;
   background: var(--background-color);
+}
+
+.drop-area {
+  width: 100%;
+  height: 100%;
 }
 
 .canvas-info {
