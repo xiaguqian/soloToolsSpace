@@ -5,12 +5,17 @@ from PIL import Image
 import numpy as np
 import cv2
 import sys
-import os
 from app.config import Config
 from app.database import StepType
 
 class DesktopExecutor:
     def __init__(self):
+        self._setup_display()
+        pyautogui.FAILSAFE = False
+        pyautogui.PAUSE = 0.1
+        pytesseract.pytesseract.tesseract_cmd = Config.TESSERACT_PATH
+    
+    def _setup_display(self):
         if sys.platform == 'win32':
             try:
                 import ctypes
@@ -22,10 +27,27 @@ class DesktopExecutor:
                     ctypes.windll.user32.SetProcessDPIAware()
                 except Exception:
                     pass
+    
+    def _validate_coords(self, x, y):
+        if x is None or y is None:
+            return None, None
         
-        pyautogui.FAILSAFE = True
-        pyautogui.PAUSE = 0.15
-        pytesseract.pytesseract.tesseract_cmd = Config.TESSERACT_PATH
+        x = int(x)
+        y = int(y)
+        
+        screen_w, screen_h = pyautogui.size()
+        
+        if x < 0:
+            x = 0
+        elif x >= screen_w:
+            x = screen_w - 10
+        
+        if y < 0:
+            y = 0
+        elif y >= screen_h:
+            y = screen_h - 10
+        
+        return x, y
     
     def execute_step(self, step):
         step_type = step.step_type
@@ -67,15 +89,16 @@ class DesktopExecutor:
         interval = float(params.get('interval', 0.1))
         
         if x is not None and y is not None:
-            x = int(x)
-            y = int(y)
-            pyautogui.moveTo(x=x, y=y, duration=0.2)
+            x, y = self._validate_coords(x, y)
+            pyautogui.moveTo(x=x, y=y, duration=0.3)
+            time.sleep(0.2)
+            pyautogui.click(button=button, clicks=clicks, interval=interval)
             time.sleep(0.1)
-            pyautogui.click(x=x, y=y, button=button, clicks=clicks, interval=interval)
             actual_pos = pyautogui.position()
             return {'success': True, 'action': 'mouse_click', 'target': (x, y), 'actual': (actual_pos.x, actual_pos.y)}
         else:
             pyautogui.click(button=button, clicks=clicks, interval=interval)
+            time.sleep(0.1)
             return {'success': True, 'action': 'mouse_click'}
     
     def _mouse_double_click(self, params):
@@ -84,26 +107,27 @@ class DesktopExecutor:
         button = params.get('button', 'left')
         
         if x is not None and y is not None:
-            x = int(x)
-            y = int(y)
-            pyautogui.moveTo(x=x, y=y, duration=0.2)
+            x, y = self._validate_coords(x, y)
+            pyautogui.moveTo(x=x, y=y, duration=0.3)
+            time.sleep(0.2)
+            pyautogui.doubleClick(button=button)
             time.sleep(0.1)
-            pyautogui.doubleClick(x=x, y=y, button=button)
             actual_pos = pyautogui.position()
             return {'success': True, 'action': 'mouse_double_click', 'target': (x, y), 'actual': (actual_pos.x, actual_pos.y)}
         else:
             pyautogui.doubleClick(button=button)
+            time.sleep(0.1)
             return {'success': True, 'action': 'mouse_double_click'}
     
     def _mouse_move(self, params):
         x = params.get('x')
         y = params.get('y')
-        duration = float(params.get('duration', 0.2))
+        duration = float(params.get('duration', 0.3))
         
         if x is not None and y is not None:
-            x = int(x)
-            y = int(y)
+            x, y = self._validate_coords(x, y)
             pyautogui.moveTo(x=x, y=y, duration=duration)
+            time.sleep(0.1)
             actual_pos = pyautogui.position()
             return {'success': True, 'action': 'mouse_move', 'target': (x, y), 'actual': (actual_pos.x, actual_pos.y)}
         return {'success': True, 'action': 'mouse_move', 'position': (x, y)}
@@ -114,13 +138,12 @@ class DesktopExecutor:
         y = params.get('y')
         
         if x is not None and y is not None:
-            x = int(x)
-            y = int(y)
-            pyautogui.moveTo(x=x, y=y, duration=0.2)
-            time.sleep(0.1)
-            pyautogui.scroll(clicks=clicks, x=x, y=y)
-        else:
-            pyautogui.scroll(clicks=clicks)
+            x, y = self._validate_coords(x, y)
+            pyautogui.moveTo(x=x, y=y, duration=0.3)
+            time.sleep(0.2)
+        
+        pyautogui.scroll(clicks=clicks)
+        time.sleep(0.2)
         return {'success': True, 'action': 'mouse_scroll', 'clicks': clicks}
     
     def _key_press(self, params):
