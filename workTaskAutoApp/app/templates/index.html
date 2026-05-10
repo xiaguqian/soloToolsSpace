@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桌面任务执行系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+        
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+        }
+        
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .card-icon.tasks {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .card-icon.schedules {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .card-icon.dashboard {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        .card h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 60px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>桌面任务执行系统</h1>
+            <p>自动化桌面操作与浏览器操作的任务调度平台</p>
+        </header>
+        
+        <div class="cards">
+            <div class="card" onclick="window.location.href='/tasks'">
+                <div class="card-icon tasks">📋</div>
+                <h3>任务管理</h3>
+                <p>创建和管理自动化任务，配置鼠标点击、键盘操作、图片识别、浏览器操作等步骤。</p>
+            </div>
+            
+            <div class="card" onclick="window.location.href='/schedules'">
+                <div class="card-icon schedules">📅</div>
+                <h3>日程管理</h3>
+                <p>将任务组合成日程，按天、周、月、季度定时执行。每日只能有一个可用日程。</p>
+            </div>
+            
+            <div class="card" onclick="window.location.href='/dashboard'">
+                <div class="card-icon dashboard">📊</div>
+                <h3>执行监控</h3>
+                <p>实时监控任务执行状态，查看执行日志，手动触发任务或日程执行。</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>基于 Python + Redis + MySQL + FastAPI 构建</p>
+        </div>
+    </div>
+</body>
+</html>

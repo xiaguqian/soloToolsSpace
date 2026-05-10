@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日程管理 - 桌面任务执行系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            opacity: 1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .page-header h2 {
+            color: #333;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+        
+        .btn-success {
+            background: #43e97b;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f5576c;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #f6d365;
+            color: #333;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .today-schedule {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .today-schedule h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+        
+        .today-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .today-info-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .today-info-item .label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .today-info-item .value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .schedules-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .schedule-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .schedule-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .schedule-card.active {
+            border: 2px solid #43e97b;
+            background: #f0fff4;
+        }
+        
+        .schedule-card.cancelled {
+            opacity: 0.6;
+        }
+        
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .schedule-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .schedule-status {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .schedule-status.active {
+            background: #43e97b;
+        }
+        
+        .schedule-status.inactive {
+            background: #666;
+        }
+        
+        .schedule-status.cancelled {
+            background: #f5576c;
+        }
+        
+        .schedule-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .schedule-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .schedule-meta-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .schedule-meta-item .label {
+            color: #999;
+            margin-bottom: 3px;
+        }
+        
+        .schedule-meta-item .value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .schedule-tasks {
+            margin-bottom: 15px;
+        }
+        
+        .schedule-tasks .title {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        
+        .task-pill {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+            color: #333;
+        }
+        
+        .schedule-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            color: #333;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .tasks-selector {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .tasks-selector h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .available-tasks, .selected-tasks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .task-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .task-item:hover {
+            border-color: #667eea;
+        }
+        
+        .task-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .task-item.desktop {
+            border-left: 3px solid #f093fb;
+        }
+        
+        .task-item.browser {
+            border-left: 3px solid #4facfe;
+        }
+        
+        .modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>桌面任务执行系统</h1>
+        <nav class="nav-links">
+            <a href="/">首页</a>
+            <a href="/tasks">任务管理</a>
+            <a href="/schedules" class="active">日程管理</a>
+            <a href="/dashboard">执行监控</a>
+        </nav>
+    </div>
+    
+    <div class="container">
+        <div class="today-schedule">
+            <h3>📅 今日日程</h3>
+            <div id="todaySchedule" class="today-info">
+                <div class="today-info-item">
+                    <div class="label">当前状态</div>
+                    <div class="value">加载中...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-header">
+            <h2>日程列表</h2>
+            <button class="btn btn-primary" onclick="openScheduleModal()">+ 新建日程</button>
+        </div>
+        
+        <div class="card">
+            <div id="schedulesList" class="schedules-list">
+                <div class="empty-state">
+                    <div class="icon">📅</div>
+                    <p>暂无日程，点击上方按钮创建第一个日程</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="scheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">新建日程</h3>
+                <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-box">
+                    ⚠️ 注意：新建或激活一个日程时，其他日程将被置为作废状态。系统每日只能有一个可用日程。
+                </div>
+                
+                <div class="form-group">
+                    <label>日程名称 *</label>
+                    <input type="text" id="scheduleName" class="form-control" placeholder="请输入日程名称">
+                </div>
+                
+                <div class="form-group">
+                    <label>日程描述</label>
+                    <textarea id="scheduleDescription" class="form-control" placeholder="请输入日程描述"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>执行周期 *</label>
+                    <select id="scheduleType" class="form-control">
+                        <option value="">请选择执行周期</option>
+                        <option value="daily">每天</option>
+                        <option value="weekly">每周</option>
+                        <option value="monthly">每月</option>
+                        <option value="quarterly">每季度</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>执行时间 * (格式: HH:MM)</label>
+                    <input type="time" id="scheduleTime" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label>基准日期 (可选，用于周/月/季度周期)</label>
+                    <input type="date" id="scheduleDate" class="form-control">
+                </div>
+                
+                <div class="tasks-selector">
+                    <h4>选择要执行的任务（点击选择，按选择顺序执行）</h4>
+                    <div id="availableTasks" class="available-tasks"></div>
+                    <div class="selected-tasks-label" style="margin-top: 15px; font-size: 12px; color: #666;">已选择的任务（将按选择顺序执行）：</div>
+                    <div id="selectedTasks" class="selected-tasks"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeScheduleModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveSchedule()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentScheduleId = null;
+        let allTasks = [];
+        let selectedTaskIds = [];
+        
+        const scheduleTypeLabels = {
+            daily: '每天',
+            weekly: '每周',
+            monthly: '每月',
+            quarterly: '每季度'
+        };
+        
+        const scheduleStatusLabels = {
+            active: '可用',
+            inactive: '停用',
+            cancelled: '作废'
+        };
+        
+        async function loadData() {
+            await Promise.all([
+                loadTodaySchedule(),
+                loadSchedules(),
+                loadTasks()
+            ]);
+        }
+        
+        async function loadTodaySchedule() {
+            try {
+                const response = await fetch('/api/schedules/today');
+                const result = await response.json();
+                
+                const el = document.getElementById('todaySchedule');
+                
+                if (!result.data) {
+                    el.innerHTML = `
+                        <div class="today-info-item">
+                            <div class="label">当前状态</div>
+                            <div class="value">今日无可用日程</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const s = result.data;
+                el.innerHTML = `
+                    <div class="today-info-item">
+                        <div class="label">日程名称</div>
+                        <div class="value">${s.name}</div>
+                    </div>
+                    <div class="today-info-item">
+                        <div class="label">执行周期</div>
+                        <div class="value">${scheduleTypeLabels[s.schedule_type]}</div>
+                    </div>
+                    <div class="today-info-item">
+                        <div class="label">执行时间</div>
+                        <div class="value">${s.schedule_time}</div>
+                    </div>
+                    <div class="today-info-item">
+                        <div class="label">任务数量</div>
+                        <div class="value">${s.tasks.length} 个</div>
+                    </div>
+                    <div class="today-info-item" style="grid-column: span 2;">
+                        <div class="label">包含任务</div>
+                        <div class="value">${s.tasks.map(t => t.name).join(' → ')}</div>
+                    </div>
+                `;
+                
+                if (s.tasks.length > 0) {
+                    el.innerHTML += `
+                        <div class="today-info-item" style="grid-column: span 4;">
+                            <button class="btn btn-sm btn-success" onclick="runTodaySchedule()" style="width: 100%;">▶️ 立即执行今日日程</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载今日日程失败:', error);
+            }
+        }
+        
+        async function loadSchedules() {
+            try {
+                const response = await fetch('/api/schedules');
+                const result = await response.json();
+                
+                const listEl = document.getElementById('schedulesList');
+                
+                if (!result.data || result.data.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>暂无日程，点击上方按钮创建第一个日程</p></div>';
+                    return;
+                }
+                
+                listEl.innerHTML = result.data.map(s => `
+                    <div class="schedule-card ${s.status}">
+                        <div class="schedule-header">
+                            <span class="schedule-name">${s.name}</span>
+                            <span class="schedule-status ${s.status}">${scheduleStatusLabels[s.status]}</span>
+                        </div>
+                        <div class="schedule-description">${s.description || '暂无描述'}</div>
+                        <div class="schedule-meta">
+                            <div class="schedule-meta-item">
+                                <div class="label">执行周期</div>
+                                <div class="value">${scheduleTypeLabels[s.schedule_type]}</div>
+                            </div>
+                            <div class="schedule-meta-item">
+                                <div class="label">执行时间</div>
+                                <div class="value">${s.schedule_time}</div>
+                            </div>
+                        </div>
+                        <div class="schedule-meta">
+                            <div class="schedule-meta-item">
+                                <div class="label">任务数量</div>
+                                <div class="value">${s.task_count} 个</div>
+                            </div>
+                            <div class="schedule-meta-item">
+                                <div class="label">创建时间</div>
+                                <div class="value">${new Date(s.created_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <div class="schedule-actions">
+                            ${s.status !== 'active' ? `<button class="btn btn-sm btn-success" onclick="activateSchedule(${s.id})">激活</button>` : ''}
+                            <button class="btn btn-sm btn-primary" onclick="editSchedule(${s.id})">编辑</button>
+                            <button class="btn btn-sm btn-success" onclick="runSchedule(${s.id})">执行</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSchedule(${s.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载日程失败:', error);
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks');
+                const result = await response.json();
+                allTasks = result.data || [];
+            } catch (error) {
+                console.error('加载任务失败:', error);
+                allTasks = [];
+            }
+        }
+        
+        function renderTaskSelector() {
+            const availableEl = document.getElementById('availableTasks');
+            const selectedEl = document.getElementById('selectedTasks');
+            
+            availableEl.innerHTML = allTasks
+                .filter(t => !selectedTaskIds.includes(t.id))
+                .map(t => `
+                    <div class="task-item ${t.task_type}" onclick="toggleTaskSelection(${t.id})">
+                        ${t.name} (${t.task_type === 'desktop' ? '桌面' : '浏览器'})
+                    </div>
+                `).join('') || '<span style="color: #999; font-size: 13px;">暂无可用任务或已全部选择</span>';
+            
+            selectedEl.innerHTML = selectedTaskIds.map((id, index) => {
+                const t = allTasks.find(x => x.id === id);
+                return t ? `
+                    <div class="task-item selected ${t.task_type}" onclick="toggleTaskSelection(${id})">
+                        ${index + 1}. ${t.name}
+                    </div>
+                ` : '';
+            }).join('') || '<span style="color: #999; font-size: 13px;">请点击上方任务进行选择</span>';
+        }
+        
+        function toggleTaskSelection(taskId) {
+            const index = selectedTaskIds.indexOf(taskId);
+            if (index > -1) {
+                selectedTaskIds.splice(index, 1);
+            } else {
+                selectedTaskIds.push(taskId);
+            }
+            renderTaskSelector();
+        }
+        
+        async function openScheduleModal(schedule = null) {
+            currentScheduleId = schedule ? schedule.id : null;
+            selectedTaskIds = [];
+            
+            document.getElementById('modalTitle').textContent = schedule ? '编辑日程' : '新建日程';
+            document.getElementById('scheduleName').value = schedule ? schedule.name : '';
+            document.getElementById('scheduleDescription').value = schedule ? schedule.description : '';
+            document.getElementById('scheduleType').value = schedule ? schedule.schedule_type : '';
+            document.getElementById('scheduleTime').value = schedule ? schedule.schedule_time : '';
+            document.getElementById('scheduleDate').value = schedule && schedule.schedule_date 
+                ? schedule.schedule_date.split('T')[0] 
+                : '';
+            
+            if (schedule && schedule.tasks) {
+                selectedTaskIds = schedule.tasks.map(t => t.id);
+            }
+            
+            await loadTasks();
+            renderTaskSelector();
+            document.getElementById('scheduleModal').classList.add('active');
+        }
+        
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').classList.remove('active');
+            currentScheduleId = null;
+            selectedTaskIds = [];
+        }
+        
+        async function saveSchedule() {
+            const name = document.getElementById('scheduleName').value.trim();
+            const description = document.getElementById('scheduleDescription').value.trim();
+            const scheduleType = document.getElementById('scheduleType').value;
+            const scheduleTime = document.getElementById('scheduleTime').value;
+            const scheduleDate = document.getElementById('scheduleDate').value;
+            
+            if (!name || !scheduleType || !scheduleTime) {
+                alert('请填写必填项');
+                return;
+            }
+            
+            if (selectedTaskIds.length === 0) {
+                alert('请至少选择一个任务');
+                return;
+            }
+            
+            const data = {
+                name,
+                description,
+                schedule_type: scheduleType,
+                schedule_time: scheduleTime,
+                schedule_date: scheduleDate ? new Date(scheduleDate).toISOString() : null,
+                tasks: selectedTaskIds.map((id, index) => ({
+                    task_id: id,
+                    task_order: index + 1
+                }))
+            };
+            
+            try {
+                let response;
+                if (currentScheduleId) {
+                    response = await fetch(`/api/schedules/${currentScheduleId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/api/schedules', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    closeScheduleModal();
+                    loadData();
+                } else {
+                    alert('保存失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('保存日程失败:', error);
+                alert('保存失败: ' + error.message);
+            }
+        }
+        
+        async function editSchedule(scheduleId) {
+            try {
+                const response = await fetch(`/api/schedules/${scheduleId}`);
+                const result = await response.json();
+                if (result.success) {
+                    openScheduleModal(result.data);
+                }
+            } catch (error) {
+                console.error('加载日程失败:', error);
+            }
+        }
+        
+        async function activateSchedule(scheduleId) {
+            if (!confirm('确定要激活此日程吗？其他日程将被置为作废状态。')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/schedules/${scheduleId}/activate`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    loadData();
+                }
+            } catch (error) {
+                console.error('激活日程失败:', error);
+                alert('激活失败: ' + error.message);
+            }
+        }
+        
+        async function runSchedule(scheduleId) {
+            if (!confirm('确定要执行此日程吗？\n警告：这将控制您的鼠标和键盘！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/execution/schedule/${scheduleId}/run`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('日程已提交执行，请在执行监控中查看状态');
+                } else {
+                    alert('执行失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('执行日程失败:', error);
+                alert('执行失败: ' + error.message);
+            }
+        }
+        
+        async function runTodaySchedule() {
+            if (!confirm('确定要执行今日日程吗？\n警告：这将控制您的鼠标和键盘！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/execution/today/run-now', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                } else {
+                    alert('执行失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('执行今日日程失败:', error);
+                alert('执行失败: ' + error.message);
+            }
+        }
+        
+        async function deleteSchedule(scheduleId) {
+            if (!confirm('确定要删除此日程吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/schedules/${scheduleId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    loadData();
+                }
+            } catch (error) {
+                console.error('删除日程失败:', error);
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>

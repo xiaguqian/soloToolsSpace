@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务管理 - 桌面任务执行系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            opacity: 1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .page-header h2 {
+            color: #333;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd6;
+        }
+        
+        .btn-success {
+            background: #43e97b;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f5576c;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #f6d365;
+            color: #333;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .tasks-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .task-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .task-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .task-card.desktop {
+            border-left: 4px solid #f093fb;
+        }
+        
+        .task-card.browser {
+            border-left: 4px solid #4facfe;
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .task-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .task-type {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .task-type.desktop {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .task-type.browser {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .task-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .task-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 15px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            color: #333;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .steps-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .steps-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .steps-header h4 {
+            color: #333;
+        }
+        
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .step-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .step-order {
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .step-type {
+            font-size: 12px;
+            background: #e9ecef;
+            padding: 3px 10px;
+            border-radius: 4px;
+            color: #666;
+        }
+        
+        .step-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .params-view {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .mouse-pos-tool {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .mouse-pos-tool h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .mouse-pos-display {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .mouse-pos-display span {
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #856404;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        .modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>桌面任务执行系统</h1>
+        <nav class="nav-links">
+            <a href="/">首页</a>
+            <a href="/tasks" class="active">任务管理</a>
+            <a href="/schedules">日程管理</a>
+            <a href="/dashboard">执行监控</a>
+        </nav>
+    </div>
+    
+    <div class="container">
+        <div class="page-header">
+            <h2>任务管理</h2>
+            <button class="btn btn-primary" onclick="openTaskModal()">+ 新建任务</button>
+        </div>
+        
+        <div class="card">
+            <div class="mouse-pos-tool">
+                <h4>鼠标位置获取工具</h4>
+                <div class="mouse-pos-display">
+                    <span id="mouseX">X: --</span>
+                    <span id="mouseY">Y: --</span>
+                    <button class="btn btn-sm btn-primary" onclick="getMousePosition()">获取当前鼠标位置</button>
+                    <button class="btn btn-sm btn-warning" onclick="startMouseTracking()">开始实时追踪 (ESC停止)</button>
+                </div>
+            </div>
+            
+            <div id="tasksList" class="tasks-list">
+                <div class="empty-state">
+                    <div class="icon">📋</div>
+                    <p>暂无任务，点击上方按钮创建第一个任务</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">新建任务</h3>
+                <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>任务名称 *</label>
+                    <input type="text" id="taskName" class="form-control" placeholder="请输入任务名称">
+                </div>
+                
+                <div class="form-group">
+                    <label>任务描述</label>
+                    <textarea id="taskDescription" class="form-control" placeholder="请输入任务描述"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>任务类型 *</label>
+                    <select id="taskType" class="form-control" onchange="updateStepOptions()">
+                        <option value="">请选择任务类型</option>
+                        <option value="desktop">桌面操作</option>
+                        <option value="browser">浏览器操作</option>
+                    </select>
+                </div>
+                
+                <div class="steps-section">
+                    <div class="steps-header">
+                        <h4>操作步骤</h4>
+                        <button class="btn btn-sm btn-primary" onclick="addStep()">+ 添加步骤</button>
+                    </div>
+                    <div id="stepsList" class="steps-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeTaskModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveTask()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentTaskId = null;
+        let steps = [];
+        let trackingInterval = null;
+        let stepTypes = {
+            desktop: [
+                { value: 'mouse_click', label: '鼠标单击' },
+                { value: 'mouse_double_click', label: '鼠标双击' },
+                { value: 'mouse_move', label: '鼠标移动' },
+                { value: 'mouse_scroll', label: '鼠标滚动' },
+                { value: 'key_press', label: '按键按下' },
+                { value: 'key_release', label: '按键弹起' },
+                { value: 'key_type', label: '键盘输入' },
+                { value: 'hotkey', label: '快捷键' },
+                { value: 'image_recognize', label: '图片识别' },
+                { value: 'ocr_recognize', label: 'OCR文字识别' },
+                { value: 'sleep', label: '等待' }
+            ],
+            browser: [
+                { value: 'browser_open', label: '打开浏览器' },
+                { value: 'browser_close', label: '关闭浏览器' },
+                { value: 'browser_goto', label: '跳转URL' },
+                { value: 'browser_find_element', label: '查找元素' },
+                { value: 'browser_click', label: '点击元素' },
+                { value: 'browser_input', label: '输入文本' },
+                { value: 'browser_get_text', label: '获取文本' },
+                { value: 'browser_switch_window', label: '切换窗口' },
+                { value: 'browser_switch_frame', label: '切换Frame' },
+                { value: 'browser_execute_js', label: '执行JS' },
+                { value: 'browser_screenshot', label: '截图' }
+            ]
+        };
+        
+        const paramConfigs = {
+            mouse_click: [
+                { key: 'x', label: 'X坐标', type: 'number' },
+                { key: 'y', label: 'Y坐标', type: 'number' },
+                { key: 'button', label: '按钮(left/right/middle)', type: 'text', default: 'left' },
+                { key: 'clicks', label: '点击次数', type: 'number', default: 1 }
+            ],
+            mouse_double_click: [
+                { key: 'x', label: 'X坐标', type: 'number' },
+                { key: 'y', label: 'Y坐标', type: 'number' },
+                { key: 'button', label: '按钮(left/right)', type: 'text', default: 'left' }
+            ],
+            mouse_move: [
+                { key: 'x', label: 'X坐标', type: 'number', required: true },
+                { key: 'y', label: 'Y坐标', type: 'number', required: true },
+                { key: 'duration', label: '移动时长(秒)', type: 'number', default: 0 }
+            ],
+            mouse_scroll: [
+                { key: 'clicks', label: '滚动量(正上负下)', type: 'number', required: true },
+                { key: 'x', label: 'X坐标', type: 'number' },
+                { key: 'y', label: 'Y坐标', type: 'number' }
+            ],
+            key_press: [
+                { key: 'key', label: '按键', type: 'text', required: true }
+            ],
+            key_release: [
+                { key: 'key', label: '按键', type: 'text', required: true }
+            ],
+            key_type: [
+                { key: 'text', label: '输入文本', type: 'text', required: true },
+                { key: 'interval', label: '间隔时间(秒)', type: 'number', default: 0 }
+            ],
+            hotkey: [
+                { key: 'keys', label: '按键(逗号分隔)', type: 'text', required: true }
+            ],
+            image_recognize: [
+                { key: 'template_path', label: '模板图片路径', type: 'text', required: true },
+                { key: 'confidence', label: '置信度(0-1)', type: 'number', default: 0.8 },
+                { key: 'region', label: '区域(x,y,w,h,逗号分隔)', type: 'text' },
+                { key: 'grayscale', label: '灰度匹配', type: 'checkbox' }
+            ],
+            ocr_recognize: [
+                { key: 'region', label: '区域(x,y,w,h,逗号分隔)', type: 'text' },
+                { key: 'lang', label: '语言(chi_sim/eng)', type: 'text', default: 'chi_sim+eng' }
+            ],
+            sleep: [
+                { key: 'seconds', label: '等待时间(秒)', type: 'number', required: true, default: 1 }
+            ],
+            browser_open: [
+                { key: 'browser_type', label: '浏览器类型(chrome/firefox/edge)', type: 'text', default: 'chrome' }
+            ],
+            browser_close: [
+                { key: 'close_all', label: '关闭所有', type: 'checkbox' }
+            ],
+            browser_goto: [
+                { key: 'url', label: 'URL地址', type: 'text', required: true }
+            ],
+            browser_find_element: [
+                { key: 'by', label: '定位方式', type: 'select', options: ['id', 'name', 'xpath', 'css_selector', 'class_name', 'tag_name', 'link_text', 'partial_link_text'], default: 'css_selector' },
+                { key: 'value', label: '定位值', type: 'text', required: true },
+                { key: 'timeout', label: '超时时间(秒)', type: 'number', default: 10 }
+            ],
+            browser_click: [
+                { key: 'by', label: '定位方式', type: 'select', options: ['id', 'name', 'xpath', 'css_selector', 'class_name', 'tag_name', 'link_text', 'partial_link_text'], default: 'css_selector' },
+                { key: 'value', label: '定位值', type: 'text', required: true },
+                { key: 'timeout', label: '超时时间(秒)', type: 'number', default: 10 }
+            ],
+            browser_input: [
+                { key: 'by', label: '定位方式', type: 'select', options: ['id', 'name', 'xpath', 'css_selector', 'class_name', 'tag_name', 'link_text', 'partial_link_text'], default: 'css_selector' },
+                { key: 'value', label: '定位值', type: 'text', required: true },
+                { key: 'text', label: '输入文本', type: 'text', required: true },
+                { key: 'clear_first', label: '先清空', type: 'checkbox', default: true }
+            ],
+            browser_get_text: [
+                { key: 'by', label: '定位方式', type: 'select', options: ['id', 'name', 'xpath', 'css_selector', 'class_name', 'tag_name', 'link_text', 'partial_link_text'], default: 'css_selector' },
+                { key: 'value', label: '定位值', type: 'text', required: true },
+                { key: 'timeout', label: '超时时间(秒)', type: 'number', default: 10 }
+            ],
+            browser_switch_window: [
+                { key: 'index', label: '窗口索引(负数表示最后)', type: 'number', default: -1 },
+                { key: 'title', label: '窗口标题匹配', type: 'text' }
+            ],
+            browser_switch_frame: [
+                { key: 'index', label: 'Frame索引', type: 'number' },
+                { key: 'by', label: '定位方式', type: 'select', options: ['id', 'name', 'xpath', 'css_selector'], default: 'css_selector' },
+                { key: 'value', label: '定位值', type: 'text' },
+                { key: 'back_to_default', label: '返回默认', type: 'checkbox' }
+            ],
+            browser_execute_js: [
+                { key: 'script', label: 'JavaScript代码', type: 'textarea', required: true },
+                { key: 'args', label: '参数(JSON数组)', type: 'text' }
+            ],
+            browser_screenshot: [
+                { key: 'filename', label: '文件名', type: 'text' },
+                { key: 'element_by', label: '元素定位方式', type: 'select', options: ['id', 'name', 'xpath', 'css_selector'] },
+                { key: 'element_value', label: '元素定位值', type: 'text' }
+            ]
+        };
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/tasks');
+                const result = await response.json();
+                
+                const listEl = document.getElementById('tasksList');
+                
+                if (!result.data || result.data.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>暂无任务，点击上方按钮创建第一个任务</p></div>';
+                    return;
+                }
+                
+                listEl.innerHTML = result.data.map(task => `
+                    <div class="task-card ${task.task_type}">
+                        <div class="task-header">
+                            <span class="task-name">${task.name}</span>
+                            <span class="task-type ${task.task_type}">${task.task_type === 'desktop' ? '桌面操作' : '浏览器操作'}</span>
+                        </div>
+                        <div class="task-description">${task.description || '暂无描述'}</div>
+                        <div class="task-meta">
+                            <span>步骤数: ${task.step_count}</span>
+                            <span>创建时间: ${new Date(task.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-sm btn-primary" onclick="editTask(${task.id})">编辑</button>
+                            <button class="btn btn-sm btn-success" onclick="runTask(${task.id})">执行</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTask(${task.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function getMousePosition() {
+            try {
+                const response = await fetch('/api/execution/mouse-position');
+                const result = await response.json();
+                if (result.data) {
+                    document.getElementById('mouseX').textContent = `X: ${result.data.x}`;
+                    document.getElementById('mouseY').textContent = `Y: ${result.data.y}`;
+                }
+            } catch (error) {
+                console.error('获取鼠标位置失败:', error);
+            }
+        }
+        
+        function startMouseTracking() {
+            if (trackingInterval) {
+                stopMouseTracking();
+                return;
+            }
+            
+            trackingInterval = setInterval(getMousePosition, 100);
+            
+            function onKeyDown(e) {
+                if (e.key === 'Escape') {
+                    stopMouseTracking();
+                    document.removeEventListener('keydown', onKeyDown);
+                }
+            }
+            document.addEventListener('keydown', onKeyDown);
+        }
+        
+        function stopMouseTracking() {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+        }
+        
+        function openTaskModal(task = null) {
+            currentTaskId = task ? task.id : null;
+            steps = [];
+            
+            document.getElementById('modalTitle').textContent = task ? '编辑任务' : '新建任务';
+            document.getElementById('taskName').value = task ? task.name : '';
+            document.getElementById('taskDescription').value = task ? task.description : '';
+            document.getElementById('taskType').value = task ? task.task_type : '';
+            
+            if (task && task.steps) {
+                steps = task.steps.map(s => ({
+                    step_order: s.step_order,
+                    step_type: s.step_type,
+                    step_name: s.step_name,
+                    parameters: s.parameters || {}
+                }));
+            }
+            
+            renderSteps();
+            document.getElementById('taskModal').classList.add('active');
+        }
+        
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            currentTaskId = null;
+            steps = [];
+        }
+        
+        function updateStepOptions() {
+            steps = [];
+            renderSteps();
+        }
+        
+        function addStep() {
+            const taskType = document.getElementById('taskType').value;
+            if (!taskType) {
+                alert('请先选择任务类型');
+                return;
+            }
+            
+            const types = stepTypes[taskType];
+            steps.push({
+                step_order: steps.length + 1,
+                step_type: types[0].value,
+                step_name: '',
+                parameters: {}
+            });
+            renderSteps();
+        }
+        
+        function removeStep(index) {
+            steps.splice(index, 1);
+            steps.forEach((s, i) => s.step_order = i + 1);
+            renderSteps();
+        }
+        
+        function moveStep(index, direction) {
+            if (index === 0 && direction === -1) return;
+            if (index === steps.length - 1 && direction === 1) return;
+            
+            const temp = steps[index];
+            steps[index] = steps[index + direction];
+            steps[index + direction] = temp;
+            steps.forEach((s, i) => s.step_order = i + 1);
+            renderSteps();
+        }
+        
+        function renderSteps() {
+            const listEl = document.getElementById('stepsList');
+            const taskType = document.getElementById('taskType').value;
+            
+            if (!taskType || steps.length === 0) {
+                listEl.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">' + 
+                    (taskType ? '暂无步骤，点击上方按钮添加' : '请先选择任务类型') + '</p>';
+                return;
+            }
+            
+            const types = stepTypes[taskType];
+            
+            listEl.innerHTML = steps.map((step, index) => {
+                const config = paramConfigs[step.step_type] || [];
+                const paramsHtml = config.map(p => {
+                    const value = step.parameters[p.key] !== undefined ? step.parameters[p.key] : p.default;
+                    
+                    if (p.type === 'textarea') {
+                        return `<div class="form-group" style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; margin-bottom: 5px;">${p.label}${p.required ? ' *' : ''}</label>
+                            <textarea class="form-control" style="font-size: 12px; min-height: 60px;" 
+                                onchange="updateStepParam(${index}, '${p.key}', this.value)">${value || ''}</textarea>
+                        </div>`;
+                    } else if (p.type === 'select') {
+                        return `<div class="form-group" style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; margin-bottom: 5px;">${p.label}${p.required ? ' *' : ''}</label>
+                            <select class="form-control" style="font-size: 12px;" 
+                                onchange="updateStepParam(${index}, '${p.key}', this.value)">
+                                ${p.options.map(opt => `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>
+                        </div>`;
+                    } else if (p.type === 'checkbox') {
+                        return `<div class="form-group" style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="param_${index}_${p.key}" 
+                                ${value ? 'checked' : ''}
+                                onchange="updateStepParam(${index}, '${p.key}', this.checked)">
+                            <label for="param_${index}_${p.key}" style="font-size: 12px; margin-bottom: 0;">${p.label}</label>
+                        </div>`;
+                    } else {
+                        return `<div class="form-group" style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; margin-bottom: 5px;">${p.label}${p.required ? ' *' : ''}</label>
+                            <input type="${p.type}" class="form-control" style="font-size: 12px;" value="${value || ''}"
+                                onchange="updateStepParam(${index}, '${p.key}', this.value)">
+                        </div>`;
+                    }
+                }).join('');
+                
+                return `<div class="step-item">
+                    <div class="step-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="step-order">${step.step_order}</span>
+                            <select class="step-type" onchange="updateStepType(${index}, this.value)">
+                                ${types.map(t => `<option value="${t.value}" ${step.step_type === t.value ? 'selected' : ''}>${t.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="step-actions">
+                            <button class="btn btn-sm" onclick="moveStep(${index}, -1)" title="上移">↑</button>
+                            <button class="btn btn-sm" onclick="moveStep(${index}, 1)" title="下移">↓</button>
+                            <button class="btn btn-sm btn-danger" onclick="removeStep(${index})" title="删除">×</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="font-size: 12px; margin-bottom: 5px;">步骤名称</label>
+                        <input type="text" class="form-control" style="font-size: 12px;" value="${step.step_name || ''}"
+                            placeholder="可选，用于标识此步骤"
+                            onchange="updateStepName(${index}, this.value)">
+                    </div>
+                    ${paramsHtml}
+                </div>`;
+            }).join('');
+        }
+        
+        function updateStepType(index, type) {
+            steps[index].step_type = type;
+            steps[index].parameters = {};
+            renderSteps();
+        }
+        
+        function updateStepName(index, name) {
+            steps[index].step_name = name;
+        }
+        
+        function updateStepParam(index, key, value) {
+            if (typeof value === 'string') {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue) && value.trim() !== '') {
+                    value = numValue;
+                }
+                if (value === 'true') value = true;
+                if (value === 'false') value = false;
+            }
+            steps[index].parameters[key] = value;
+        }
+        
+        async function saveTask() {
+            const name = document.getElementById('taskName').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
+            const taskType = document.getElementById('taskType').value;
+            
+            if (!name || !taskType) {
+                alert('请填写任务名称和类型');
+                return;
+            }
+            
+            const data = {
+                name,
+                description,
+                task_type: taskType,
+                steps: steps.map(s => ({
+                    step_order: s.step_order,
+                    step_type: s.step_type,
+                    step_name: s.step_name,
+                    parameters: s.parameters
+                }))
+            };
+            
+            try {
+                let response;
+                if (currentTaskId) {
+                    response = await fetch(`/api/tasks/${currentTaskId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/api/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    closeTaskModal();
+                    loadTasks();
+                } else {
+                    alert('保存失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('保存任务失败:', error);
+                alert('保存失败: ' + error.message);
+            }
+        }
+        
+        async function editTask(taskId) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`);
+                const result = await response.json();
+                if (result.success) {
+                    openTaskModal(result.data);
+                }
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function runTask(taskId) {
+            if (!confirm('确定要执行此任务吗？\n警告：这将控制您的鼠标和键盘！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/execution/task/${taskId}/run`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('任务已提交执行，请在执行监控中查看状态');
+                } else {
+                    alert('执行失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('执行任务失败:', error);
+                alert('执行失败: ' + error.message);
+            }
+        }
+        
+        async function deleteTask(taskId) {
+            if (!confirm('确定要删除此任务吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    loadTasks();
+                }
+            } catch (error) {
+                console.error('删除任务失败:', error);
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        loadTasks();
+    </script>
+</body>
+</html>
