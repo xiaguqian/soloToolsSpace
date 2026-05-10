@@ -1,0 +1,102 @@
+[
+    {
+        "unique_id": "REC001",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "北京",
+        "value": 5000000,
+        "unit": "元",
+        "data_date": "2024-01-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC002",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "上海",
+        "value": 6500000,
+        "unit": "元",
+        "data_date": "2024-01-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC003",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "广州",
+        "value": 4200000,
+        "unit": "元",
+        "data_date": "2024-01-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC004",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "北京",
+        "value": 5500000,
+        "unit": "元",
+        "data_date": "2024-02-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC005",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "上海",
+        "value": 7200000,
+        "unit": "元",
+        "data_date": "2024-02-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC006",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "广州",
+        "value": 4800000,
+        "unit": "元",
+        "data_date": "2024-02-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC007",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "北京",
+        "value": 6100000,
+        "unit": "元",
+        "data_date": "2024-03-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC008",
+        "data_name": "销售额",
+        "dimension_unique_id": "REGION",
+        "dimension_value": "上海",
+        "value": 7800000,
+        "unit": "元",
+        "data_date": "2024-03-01",
+        "category_name": "销售数据"
+    },
+    {
+        "unique_id": "REC009",
+        "data_name": "订单量",
+        "dimension_unique_id": "PRODUCT",
+        "dimension_value": "产品A",
+        "value": 1200,
+        "unit": "件",
+        "data_date": "2024-01-01",
+        "category_name": "运营数据"
+    },
+    {
+        "unique_id": "REC010",
+        "data_name": "订单量",
+        "dimension_unique_id": "PRODUCT",
+        "dimension_value": "产品B",
+        "value": 850,
+        "unit": "件",
+        "data_date": "2024-01-01",
+        "category_name": "运营数据"
+    }
+]

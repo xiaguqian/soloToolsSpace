@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <h1>数据分析系统</h1>
+                <form @submit.prevent="login">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" v-model="loginForm.username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" v-model="loginForm.password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                </form>
+                <p class="tip">默认管理员账号: admin / admin123</p>
+            </div>
+        </div>
+        
+        <div v-else class="app-container">
+            <header class="app-header">
+                <div class="logo">数据分析系统</div>
+                <nav class="nav-tabs">
+                    <button 
+                        v-for="tab in tabs" 
+                        :key="tab.key"
+                        :class="['nav-tab', { active: currentTab === tab.key }]"
+                        @click="currentTab = tab.key"
+                        v-show="!tab.adminOnly || isAdmin"
+                    >
+                        {{ tab.label }}
+                    </button>
+                </nav>
+                <div class="header-right">
+                    <select v-model="currentTheme" @change="applyTheme" class="theme-select">
+                        <option value="light">浅色主题</option>
+                        <option value="dark">深色主题</option>
+                        <option value="blue">蓝色主题</option>
+                    </select>
+                    <span class="user-info">{{ currentUser.username }} ({{ isAdmin ? '管理员' : '普通用户' }})</span>
+                    <button @click="logout" class="btn btn-logout">退出</button>
+                </div>
+            </header>
+            
+            <main class="app-main">
+                <div v-show="currentTab === 'analysis'" class="tab-content">
+                    <div class="analysis-container">
+                        <div class="analysis-panel">
+                            <h3>分析配置</h3>
+                            <div class="config-section">
+                                <label>选择维度</label>
+                                <select multiple v-model="analysisConfig.filters.dimension_unique_ids" class="multi-select">
+                                    <option v-for="d in options.dimensions" :key="d.unique_id" :value="d.unique_id">
+                                        {{ d.display_name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="config-row">
+                                <div class="config-section">
+                                    <label>开始日期</label>
+                                    <input type="date" v-model="analysisConfig.filters.start_date">
+                                </div>
+                                <div class="config-section">
+                                    <label>结束日期</label>
+                                    <input type="date" v-model="analysisConfig.filters.end_date">
+                                </div>
+                            </div>
+                            <div class="config-section">
+                                <label>数据分类</label>
+                                <select multiple v-model="analysisConfig.filters.category_names" class="multi-select">
+                                    <option v-for="c in options.categories" :key="c" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <div class="config-section">
+                                <label>目标度量单位</label>
+                                <select v-model="analysisConfig.target_unit">
+                                    <option value="">不转换</option>
+                                    <option v-for="u in options.units" :key="u" :value="u">{{ u }}</option>
+                                </select>
+                            </div>
+                            <div class="config-section">
+                                <label>图表类型</label>
+                                <select v-model="analysisConfig.chart_type">
+                                    <option v-for="ct in options.chart_types" :key="ct.value" :value="ct.value">
+                                        {{ ct.label }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="config-section">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" v-model="useAggregation"> 启用分组聚合
+                                </label>
+                            </div>
+                            <div v-if="useAggregation" class="aggregation-config">
+                                <h4>聚合配置</h4>
+                                <div class="config-section">
+                                    <label>分组方式</label>
+                                    <select v-model="analysisConfig.aggregations[0].group_by">
+                                        <option v-for="g in options.group_by_options" :key="g.value" :value="g.value">
+                                            {{ g.label }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="config-section">
+                                    <label>聚合函数</label>
+                                    <select v-model="analysisConfig.aggregations[0].aggregation_func">
+                                        <option v-for="af in options.aggregation_funcs" :key="af.value" :value="af.value">
+                                            {{ af.label }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div v-if="analysisConfig.aggregations[0].group_by === 'date'" class="config-section">
+                                    <label>日期分组规则</label>
+                                    <select v-model="analysisConfig.aggregations[0].group_rule">
+                                        <option value="day">按天</option>
+                                        <option value="month">按月</option>
+                                        <option value="quarter">按季度</option>
+                                        <option value="year">按年</option>
+                                    </select>
+                                </div>
+                                <div v-if="analysisConfig.aggregations[0].group_by === 'value_range'" class="config-section">
+                                    <label>数值范围 (逗号分隔)</label>
+                                    <input type="text" v-model="analysisConfig.aggregations[0].group_rule" placeholder="例如: 1000,10000,100000">
+                                </div>
+                            </div>
+                            <button @click="runAnalysis" class="btn btn-primary btn-block" :disabled="isLoading">
+                                {{ isLoading ? '分析中...' : '运行分析' }}
+                            </button>
+                        </div>
+                        <div class="chart-panel">
+                            <div v-if="analysisResult" class="chart-container">
+                                <div v-if="analysisConfig.chart_type === 'table'" class="table-wrapper">
+                                    <table v-if="analysisResult.chart_data">
+                                        <thead>
+                                            <tr>
+                                                <th v-for="h in analysisResult.chart_data.headers" :key="h">{{ h }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(row, idx) in analysisResult.chart_data.rows" :key="idx">
+                                                <td v-for="(cell, cidx) in row" :key="cidx">{{ cell }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div v-else ref="chartRef" class="chart"></div>
+                            </div>
+                            <div v-else class="no-data">
+                                <p>请配置分析参数并点击"运行分析"</p>
+                            </div>
+                            <div v-if="analysisResult" class="analysis-summary">
+                                <p>匹配数据: {{ analysisResult.records_count }} 条</p>
+                                <p v-if="analysisResult.target_unit">目标单位: {{ analysisResult.target_unit }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-show="currentTab === 'data'" class="tab-content">
+                    <div class="data-management">
+                        <div class="data-actions">
+                            <button @click="showDataModal = true" class="btn btn-primary">+ 手动录入</button>
+                            <button @click="showImportModal = true" class="btn btn-secondary">导入文件</button>
+                            <button @click="loadData" class="btn btn-refresh">刷新</button>
+                        </div>
+                        <div class="data-filters">
+                            <input type="text" v-model="dataFilter" placeholder="搜索数据名称..." @input="loadData">
+                        </div>
+                        <div class="table-wrapper data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>数据名称</th>
+                                        <th>维度</th>
+                                        <th>维度值</th>
+                                        <th>数值</th>
+                                        <th>单位</th>
+                                        <th>日期</th>
+                                        <th>分类</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="record in dataRecords" :key="record.id">
+                                        <td>{{ record.unique_id }}</td>
+                                        <td>{{ record.data_name }}</td>
+                                        <td>{{ record.dimension?.display_name }}</td>
+                                        <td>{{ record.dimension_value }}</td>
+                                        <td>{{ record.value }}</td>
+                                        <td>{{ record.unit }}</td>
+                                        <td>{{ formatDate(record.data_date) }}</td>
+                                        <td>{{ record.category?.name || '-' }}</td>
+                                        <td>
+                                            <button @click="deleteRecord(record.id)" class="btn btn-danger btn-sm" v-if="isAdmin">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-show="currentTab === 'dimensions' && isAdmin" class="tab-content">
+                    <div class="management-container">
+                        <div class="management-header">
+                            <h3>维度管理</h3>
+                            <button @click="showDimensionModal = true" class="btn btn-primary">+ 新建维度</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>唯一标识</th>
+                                        <th>英文名</th>
+                                        <th>显示名称</th>
+                                        <th>默认单位</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="dim in dimensions" :key="dim.id">
+                                        <td>{{ dim.unique_id }}</td>
+                                        <td>{{ dim.english_name }}</td>
+                                        <td>{{ dim.display_name }}</td>
+                                        <td>{{ dim.default_unit || '-' }}</td>
+                                        <td>
+                                            <span :class="['status-badge', dim.is_active ? 'active' : 'inactive']">
+                                                {{ dim.is_active ? '启用' : '禁用' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button @click="toggleDimension(dim)" class="btn btn-sm" :class="dim.is_active ? 'btn-warning' : 'btn-success'">
+                                                {{ dim.is_active ? '禁用' : '启用' }}
+                                            </button>
+                                            <button @click="deleteDimension(dim.id)" class="btn btn-danger btn-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-show="currentTab === 'conversion' && isAdmin" class="tab-content">
+                    <div class="management-container">
+                        <div class="management-header">
+                            <h3>度量换算规则</h3>
+                            <button @click="showConversionModal = true" class="btn btn-primary">+ 新建规则</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>规则名称</th>
+                                        <th>源单位</th>
+                                        <th>目标单位</th>
+                                        <th>表达式</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="rule in conversionRules" :key="rule.id">
+                                        <td>{{ rule.name }}</td>
+                                        <td>{{ rule.source_unit }}</td>
+                                        <td>{{ rule.target_unit }}</td>
+                                        <td><code>{{ rule.expression }}</code></td>
+                                        <td>
+                                            <span :class="['status-badge', rule.is_enabled ? 'active' : 'inactive']">
+                                                {{ rule.is_enabled ? '启用' : '禁用' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button @click="toggleRule(rule)" class="btn btn-sm" :class="rule.is_enabled ? 'btn-warning' : 'btn-success'">
+                                                {{ rule.is_enabled ? '禁用' : '启用' }}
+                                            </button>
+                                            <button @click="deleteRule(rule.id)" class="btn btn-danger btn-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="test-conversion">
+                            <h4>测试换算</h4>
+                            <div class="test-form">
+                                <select v-model="testForm.source_unit">
+                                    <option v-for="u in options.units" :key="u" :value="u">{{ u }}</option>
+                                </select>
+                                <span>→</span>
+                                <select v-model="testForm.target_unit">
+                                    <option v-for="u in options.units" :key="u" :value="u">{{ u }}</option>
+                                </select>
+                                <input type="number" v-model.number="testForm.value" placeholder="数值">
+                                <button @click="testConversion" class="btn btn-primary">测试</button>
+                            </div>
+                            <p v-if="testResult">结果: {{ testResult }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-show="currentTab === 'users' && isAdmin" class="tab-content">
+                    <div class="management-container">
+                        <div class="management-header">
+                            <h3>用户管理</h3>
+                            <button @click="showUserModal = true" class="btn btn-primary">+ 新建用户</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>邮箱</th>
+                                        <th>角色</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="user in users" :key="user.id">
+                                        <td>{{ user.username }}</td>
+                                        <td>{{ user.email || '-' }}</td>
+                                        <td>{{ user.role === 'admin' ? '管理员' : '普通用户' }}</td>
+                                        <td>
+                                            <span :class="['status-badge', user.is_active ? 'active' : 'inactive']">
+                                                {{ user.is_active ? '启用' : '禁用' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button 
+                                                @click="toggleUser(user.id)" 
+                                                class="btn btn-sm" 
+                                                :class="user.is_active ? 'btn-warning' : 'btn-success'"
+                                                :disabled="user.username === 'admin'"
+                                            >
+                                                {{ user.is_active ? '禁用' : '启用' }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-show="currentTab === 'summary'" class="tab-content">
+                    <div class="summary-container">
+                        <h3>系统概览</h3>
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="card-value">{{ summary?.total_records || 0 }}</div>
+                                <div class="card-label">数据记录</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-value">{{ summary?.total_dimensions || 0 }}</div>
+                                <div class="card-label">维度数量</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-value">{{ summary?.total_categories || 0 }}</div>
+                                <div class="card-label">数据分类</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-value">{{ summary?.total_conversion_rules || 0 }}</div>
+                                <div class="card-label">换算规则</div>
+                            </div>
+                        </div>
+                        <div v-if="summary?.recent_records?.length" class="recent-records">
+                            <h4>最近录入数据</h4>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>数据名称</th>
+                                            <th>数值</th>
+                                            <th>单位</th>
+                                            <th>日期</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="r in summary.recent_records" :key="r.id">
+                                            <td>{{ r.data_name }}</td>
+                                            <td>{{ r.value }}</td>
+                                            <td>{{ r.unit }}</td>
+                                            <td>{{ r.data_date }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        
+        <div v-if="showDataModal" class="modal-overlay" @click.self="showDataModal = false">
+            <div class="modal">
+                <h3>录入数据</h3>
+                <form @submit.prevent="createDataRecord">
+                    <div class="form-group">
+                        <label>唯一ID</label>
+                        <input type="text" v-model="dataForm.unique_id" required>
+                    </div>
+                    <div class="form-group">
+                        <label>数据名称</label>
+                        <input type="text" v-model="dataForm.data_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>维度</label>
+                        <select v-model="dataForm.dimension_unique_id" required>
+                            <option v-for="d in options.dimensions" :key="d.unique_id" :value="d.unique_id">
+                                {{ d.display_name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>维度值</label>
+                        <input type="text" v-model="dataForm.dimension_value" required>
+                    </div>
+                    <div class="config-row">
+                        <div class="form-group">
+                            <label>数值</label>
+                            <input type="number" v-model.number="dataForm.value" required step="any">
+                        </div>
+                        <div class="form-group">
+                            <label>单位</label>
+                            <input type="text" v-model="dataForm.unit" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>数据日期</label>
+                        <input type="date" v-model="dataForm.data_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>数据分类</label>
+                        <input type="text" v-model="dataForm.category_name" placeholder="输入新分类或选择已有分类">
+                        <select v-if="options.categories.length" v-model="dataForm.category_name">
+                            <option value="">-- 选择已有分类 --</option>
+                            <option v-for="c in options.categories" :key="c" :value="c">{{ c }}</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" @click="showDataModal = false" class="btn btn-secondary">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div v-if="showImportModal" class="modal-overlay" @click.self="showImportModal = false">
+            <div class="modal">
+                <h3>导入数据</h3>
+                <div class="import-section">
+                    <h4>CSV导入</h4>
+                    <input type="file" accept=".csv" ref="csvFileInput" @change="handleCsvSelect">
+                    <button @click="importCsv" class="btn btn-primary" :disabled="!selectedCsvFile">导入CSV</button>
+                </div>
+                <div class="import-section">
+                    <h4>JSON导入</h4>
+                    <input type="file" accept=".json" ref="jsonFileInput" @change="handleJsonSelect">
+                    <button @click="importJson" class="btn btn-primary" :disabled="!selectedJsonFile">导入JSON</button>
+                </div>
+                <div v-if="importResult" class="import-result">
+                    <p>成功: {{ importResult.success_count }} 条</p>
+                    <p v-if="importResult.errors?.length">错误: {{ importResult.errors.length }} 条</p>
+                </div>
+                <div class="modal-actions">
+                    <button @click="showImportModal = false" class="btn btn-secondary">关闭</button>
+                </div>
+            </div>
+        </div>
+        
+        <div v-if="showDimensionModal" class="modal-overlay" @click.self="showDimensionModal = false">
+            <div class="modal">
+                <h3>新建维度</h3>
+                <form @submit.prevent="createDimension">
+                    <div class="form-group">
+                        <label>唯一标识</label>
+                        <input type="text" v-model="dimensionForm.unique_id" required>
+                    </div>
+                    <div class="form-group">
+                        <label>英文名</label>
+                        <input type="text" v-model="dimensionForm.english_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>显示名称</label>
+                        <input type="text" v-model="dimensionForm.display_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>默认单位</label>
+                        <input type="text" v-model="dimensionForm.default_unit">
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea v-model="dimensionForm.description" rows="2"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" @click="showDimensionModal = false" class="btn btn-secondary">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div v-if="showConversionModal" class="modal-overlay" @click.self="showConversionModal = false">
+            <div class="modal">
+                <h3>新建换算规则</h3>
+                <form @submit.prevent="createConversionRule">
+                    <div class="form-group">
+                        <label>规则名称</label>
+                        <input type="text" v-model="conversionForm.name" required>
+                    </div>
+                    <div class="config-row">
+                        <div class="form-group">
+                            <label>源单位</label>
+                            <input type="text" v-model="conversionForm.source_unit" required>
+                        </div>
+                        <div class="form-group">
+                            <label>目标单位</label>
+                            <input type="text" v-model="conversionForm.target_unit" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>换算表达式 (使用 x 或 value 表示原值)</label>
+                        <input type="text" v-model="conversionForm.expression" placeholder="例如: x * 10000" required>
+                        <small>示例: 万元转元: x * 10000, 华氏度转摄氏度: (x - 32) / 1.8</small>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea v-model="conversionForm.description" rows="2"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" @click="showConversionModal = false" class="btn btn-secondary">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div v-if="showUserModal" class="modal-overlay" @click.self="showUserModal = false">
+            <div class="modal">
+                <h3>新建用户</h3>
+                <form @submit.prevent="createUser">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" v-model="userForm.username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" v-model="userForm.password" required>
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" v-model="userForm.email">
+                    </div>
+                    <div class="form-group">
+                        <label>角色</label>
+                        <select v-model="userForm.role">
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" @click="showUserModal = false" class="btn btn-secondary">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div v-if="message" class="toast" :class="messageType">
+            {{ message }}
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
