@@ -144,3 +144,38 @@ def get_dimension_values(
         "dimension": dimension.display_name,
         "values": [v[0] for v in values]
     }
+
+
+@router.get("/categories-by-dimensions")
+def get_categories_by_dimensions(
+    dimension_unique_ids: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user)
+):
+    dim_ids = [d.strip() for d in dimension_unique_ids.split(",") if d.strip()]
+    if not dim_ids:
+        categories = db.query(models.DataCategory).filter(
+            models.DataCategory.is_active == True
+        ).all()
+        return {"categories": [c.name for c in categories]}
+    
+    dimension_ids = db.query(models.Dimension.id).filter(
+        models.Dimension.unique_id.in_(dim_ids)
+    ).all()
+    dimension_ids = [d[0] for d in dimension_ids]
+    if not dimension_ids:
+        return {"categories": []}
+    
+    category_ids = db.query(models.DataRecord.category_id).filter(
+        models.DataRecord.dimension_id.in_(dimension_ids),
+        models.DataRecord.category_id.isnot(None)
+    ).distinct().all()
+    category_ids = [c[0] for c in category_ids]
+    if not category_ids:
+        return {"categories": []}
+    
+    categories = db.query(models.DataCategory).filter(
+        models.DataCategory.id.in_(category_ids),
+        models.DataCategory.is_active == True
+    ).all()
+    return {"categories": [c.name for c in categories]}

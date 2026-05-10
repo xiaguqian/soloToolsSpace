@@ -60,7 +60,8 @@
                             <h3>分析配置</h3>
                             <div class="config-section">
                                 <label>选择维度</label>
-                                <select multiple v-model="analysisConfig.filters.dimension_unique_ids" class="multi-select">
+                                <select v-model="analysisConfig.filters.dimension_unique_ids" class="config-select" @change="onDimensionChange">
+                                    <option value="">全部维度</option>
                                     <option v-for="d in options.dimensions" :key="d.unique_id" :value="d.unique_id">
                                         {{ d.display_name }}
                                     </option>
@@ -78,8 +79,9 @@
                             </div>
                             <div class="config-section">
                                 <label>数据分类</label>
-                                <select multiple v-model="analysisConfig.filters.category_names" class="multi-select">
-                                    <option v-for="c in options.categories" :key="c" :value="c">{{ c }}</option>
+                                <select v-model="analysisConfig.filters.category_names" class="config-select">
+                                    <option value="">全部分类</option>
+                                    <option v-for="c in filteredCategories" :key="c" :value="c">{{ c }}</option>
                                 </select>
                             </div>
                             <div class="config-section">

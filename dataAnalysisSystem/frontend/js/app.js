@@ -36,10 +36,10 @@ createApp({
         
         const analysisConfig = ref({
             filters: {
-                dimension_unique_ids: [],
+                dimension_unique_ids: '',
                 start_date: '',
                 end_date: '',
-                category_names: []
+                category_names: ''
             },
             aggregations: [{
                 group_by: 'dimension_value',
@@ -54,6 +54,7 @@ createApp({
         const analysisResult = ref(null);
         const chartInstance = ref(null);
         const chartRef = ref(null);
+        const filteredCategories = ref([]);
         
         const dataRecords = ref([]);
         const dataFilter = ref('');
@@ -219,9 +220,32 @@ createApp({
         async function loadOptions() {
             try {
                 options.value = await apiRequest('/api/analysis/available-options');
+                await loadFilteredCategories();
             } catch (error) {
                 console.error('加载选项失败:', error);
             }
+        }
+        
+        async function loadFilteredCategories() {
+            try {
+                const dimId = analysisConfig.value.filters.dimension_unique_ids;
+                if (dimId) {
+                    const result = await apiRequest(`/api/analysis/categories-by-dimensions?dimension_unique_ids=${encodeURIComponent(dimId)}`);
+                    filteredCategories.value = result.categories || [];
+                } else {
+                    filteredCategories.value = options.value.categories || [];
+                }
+                if (analysisConfig.value.filters.category_names && !filteredCategories.value.includes(analysisConfig.value.filters.category_names)) {
+                    analysisConfig.value.filters.category_names = '';
+                }
+            } catch (error) {
+                console.error('加载分类失败:', error);
+            }
+        }
+        
+        function onDimensionChange() {
+            analysisConfig.value.filters.category_names = '';
+            loadFilteredCategories();
         }
         
         async function loadSummary() {
@@ -279,8 +303,8 @@ createApp({
                     aggregations: useAggregation.value ? analysisConfig.value.aggregations : null
                 };
                 
-                if (analysisConfig.value.filters.dimension_unique_ids?.length) {
-                    request.filters.dimension_unique_ids = analysisConfig.value.filters.dimension_unique_ids;
+                if (analysisConfig.value.filters.dimension_unique_ids) {
+                    request.filters.dimension_unique_ids = [analysisConfig.value.filters.dimension_unique_ids];
                 }
                 if (analysisConfig.value.filters.start_date) {
                     request.filters.start_date = analysisConfig.value.filters.start_date + 'T00:00:00';
@@ -288,8 +312,8 @@ createApp({
                 if (analysisConfig.value.filters.end_date) {
                     request.filters.end_date = analysisConfig.value.filters.end_date + 'T23:59:59';
                 }
-                if (analysisConfig.value.filters.category_names?.length) {
-                    request.filters.category_names = analysisConfig.value.filters.category_names;
+                if (analysisConfig.value.filters.category_names) {
+                    request.filters.category_names = [analysisConfig.value.filters.category_names];
                 }
                 
                 const result = await apiRequest('/api/analysis/', {
@@ -297,11 +321,16 @@ createApp({
                     body: JSON.stringify(request)
                 });
                 
-                analysisResult.value = result;
-                
-                await nextTick();
-                if (result.chart_data && analysisConfig.value.chart_type !== 'table') {
-                    renderChart(result.chart_data);
+                if (result.message === '没有匹配的数据') {
+                    analysisResult.value = null;
+                    showMessage('没有匹配到任何数据，请调整筛选条件', 'warning');
+                } else {
+                    analysisResult.value = result;
+                    
+                    await nextTick();
+                    if (result.chart_data && analysisConfig.value.chart_type !== 'table') {
+                        renderChart(result.chart_data);
+                    }
                 }
             } catch (error) {
                 showMessage(error.message, 'error');
@@ -686,6 +715,7 @@ createApp({
             tabs,
             isAdmin,
             options,
+            filteredCategories,
             analysisConfig,
             useAggregation,
             analysisResult,
@@ -712,6 +742,7 @@ createApp({
             logout,
             applyTheme,
             runAnalysis,
+            onDimensionChange,
             loadData,
             createDataRecord,
             deleteRecord,

@@ -222,7 +222,7 @@ class AnalysisService:
         if chart_type == "line" or chart_type == "bar":
             if not data:
                 return {"chart_type": chart_type, "x_axis": [], "series": []}
-            if isinstance(data[0], dict) and "group" in data:
+            if isinstance(data[0], dict) and "group" in data[0]:
                 x_axis = [item["group"] for item in data]
                 series = [{
                     "name": f"数值{('(' + target_unit + ')') if target_unit else ''}",
