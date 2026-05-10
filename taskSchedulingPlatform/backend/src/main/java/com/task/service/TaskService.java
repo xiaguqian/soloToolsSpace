@@ -99,7 +99,7 @@ public class TaskService {
                 .orElseThrow(() -> new RuntimeException("任务不存在"));
 
         if (task.getStatus() == Task.TaskStatus.RUNNING) {
-            stopTask(task);
+            stopTask(task.getId());
         }
 
         taskRepository.deleteById(id);

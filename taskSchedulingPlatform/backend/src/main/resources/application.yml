@@ -23,27 +23,18 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
   quartz:
-    job-store-type: jdbc
-    jdbc:
-      initialize-schema: never
+    job-store-type: memory
     properties:
       org:
         quartz:
           scheduler:
-            instanceName: clusteredScheduler
-            instanceId: AUTO
+            instanceName: TaskScheduler
           jobStore:
-            class: org.quartz.impl.jdbcjobstore.JobStoreTX
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
-            tablePrefix: QRTZ_
-            isClustered: true
-            clusterCheckinInterval: 10000
-            useProperties: true
+            class: org.quartz.simpl.RAMJobStore
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 10
             threadPriority: 5
-            threadsInheritContextClassLoaderOfInitializingThread: true
 
 jwt:
   secret: task-scheduling-platform-secret-key-2024

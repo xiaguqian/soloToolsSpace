@@ -11,6 +11,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +39,7 @@ public class LogService {
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JSONArray jsonArray = JSON.parseArray(response.getBody());
-                return jsonArray.toJavaList(Map.class);
+                return convertToMapList(jsonArray);
             }
         } catch (Exception e) {
             logger.error("Failed to get all logs", e);
@@ -56,7 +58,7 @@ public class LogService {
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return JSON.parseObject(response.getBody(), Map.class);
+                return convertToMap(JSON.parseObject(response.getBody()));
             }
         } catch (Exception e) {
             logger.error("Failed to get log by id: {}", id, e);
@@ -76,7 +78,7 @@ public class LogService {
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JSONArray jsonArray = JSON.parseArray(response.getBody());
-                return jsonArray.toJavaList(Map.class);
+                return convertToMapList(jsonArray);
             }
         } catch (Exception e) {
             logger.error("Failed to get logs by jobName: {}", jobName, e);
@@ -96,7 +98,7 @@ public class LogService {
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JSONArray jsonArray = JSON.parseArray(response.getBody());
-                return jsonArray.toJavaList(Map.class);
+                return convertToMapList(jsonArray);
             }
         } catch (Exception e) {
             logger.error("Failed to get logs by date: {}", date, e);
@@ -139,12 +141,33 @@ public class LogService {
             );
 
             if (response.getBody() != null) {
-                return JSON.parseObject(response.getBody(), Map.class);
+                return convertToMap(JSON.parseObject(response.getBody()));
             }
         } catch (Exception e) {
             logger.error("Failed to execute task: jobId={}", jobId, e);
             throw new RuntimeException("执行任务失败: " + e.getMessage());
         }
         return null;
+    }
+
+    private List<Map<String, Object>> convertToMapList(JSONArray jsonArray) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (jsonArray != null) {
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                result.add(convertToMap(jsonObject));
+            }
+        }
+        return result;
+    }
+
+    private Map<String, Object> convertToMap(JSONObject jsonObject) {
+        Map<String, Object> result = new HashMap<>();
+        if (jsonObject != null) {
+            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
     }
 }
