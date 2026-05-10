@@ -59,6 +59,9 @@ public class ShellExecutor {
     }
     
     private TaskExecutionResult checkSecurity(String command) {
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = os.contains("win");
+        
         if (shellProperties.getBlacklist() != null) {
             for (String blacklistItem : shellProperties.getBlacklist()) {
                 if (command.toLowerCase().contains(blacklistItem.toLowerCase())) {
@@ -69,6 +72,24 @@ public class ShellExecutor {
                             .exitCode(-1)
                             .build();
                 }
+            }
+        }
+        
+        String executable = extractExecutable(command);
+        if (executable != null && !isSystemCommand(executable)) {
+            String allowedExts = isWindows ? ".cmd, .bat" : ".sh";
+            boolean validExtension = isWindows ? 
+                    (executable.endsWith(".cmd") || executable.endsWith(".bat")) :
+                    executable.endsWith(".sh");
+            
+            if (!validExtension) {
+                return TaskExecutionResult.builder()
+                        .status(TaskStatus.SECURITY_REJECTED)
+                        .output("")
+                        .errorMessage("安全检查失败: " + (isWindows ? "Windows" : "Linux") + 
+                                " 系统仅允许执行 " + allowedExts + " 文件，当前文件: " + executable)
+                        .exitCode(-1)
+                        .build();
             }
         }
         
@@ -95,6 +116,79 @@ public class ShellExecutor {
         }
         
         return null;
+    }
+    
+    private String extractExecutable(String command) {
+        if (command == null || command.trim().isEmpty()) {
+            return null;
+        }
+        
+        String trimmed = command.trim();
+        String[] parts = trimmed.split("\\s+");
+        if (parts.length == 0) {
+            return null;
+        }
+        
+        String firstPart = parts[0];
+        
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = os.contains("win");
+        
+        if (isWindows) {
+            if (firstPart.equalsIgnoreCase("cmd.exe") || 
+                firstPart.equalsIgnoreCase("cmd") ||
+                firstPart.equalsIgnoreCase("powershell.exe") ||
+                firstPart.equalsIgnoreCase("powershell")) {
+                if (parts.length >= 3) {
+                    return parts[2];
+                }
+            }
+        } else {
+            if (firstPart.equalsIgnoreCase("sh") || 
+                firstPart.equalsIgnoreCase("bash") ||
+                firstPart.equalsIgnoreCase("/bin/sh") ||
+                firstPart.equalsIgnoreCase("/bin/bash")) {
+                if (parts.length >= 2) {
+                    return parts[1];
+                }
+            }
+        }
+        
+        return firstPart;
+    }
+    
+    private boolean isSystemCommand(String command) {
+        if (command == null) return false;
+        String lower = command.toLowerCase();
+        
+        String os = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = os.contains("win");
+        
+        if (isWindows) {
+            return lower.equals("echo") || lower.equals("dir") || lower.equals("cd") ||
+                   lower.equals("set") || lower.equals("cls") || lower.equals("type") ||
+                   lower.equals("copy") || lower.equals("del") || lower.equals("move") ||
+                   lower.equals("mkdir") || lower.equals("rmdir") || lower.equals("ren") ||
+                   lower.equals("where") || lower.equals("tasklist") || lower.equals("taskkill") ||
+                   lower.equals("netstat") || lower.equals("ipconfig") || lower.equals("ping") ||
+                   lower.equals("find") || lower.equals("findstr") || lower.equals("sort") ||
+                   lower.equals("more") || lower.equals("chcp") || lower.equals("ver") ||
+                   lower.equals("cmd.exe") || lower.equals("cmd") ||
+                   lower.equals("powershell.exe") || lower.equals("powershell");
+        } else {
+            return lower.equals("echo") || lower.equals("ls") || lower.equals("cd") ||
+                   lower.equals("pwd") || lower.equals("cat") || lower.equals("grep") ||
+                   lower.equals("awk") || lower.equals("sed") || lower.equals("ps") ||
+                   lower.equals("kill") || lower.equals("netstat") || lower.equals("ifconfig") ||
+                   lower.equals("ip") || lower.equals("ping") || lower.equals("curl") ||
+                   lower.equals("wget") || lower.equals("find") || lower.equals("sort") ||
+                   lower.equals("head") || lower.equals("tail") || lower.equals("wc") ||
+                   lower.equals("uniq") || lower.equals("cut") || lower.equals("tr") ||
+                   lower.equals("date") || lower.equals("uptime") || lower.equals("who") ||
+                   lower.equals("which") || lower.equals("whereis") || lower.equals("whatis") ||
+                   lower.equals("sh") || lower.equals("bash") || lower.equals("/bin/sh") ||
+                   lower.equals("/bin/bash") || lower.equals("/usr/bin/env");
+        }
     }
     
     private TaskExecutionResult runCommand(String command) {
