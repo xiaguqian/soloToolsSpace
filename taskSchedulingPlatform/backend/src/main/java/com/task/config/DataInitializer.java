@@ -7,6 +7,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -18,24 +20,30 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (!userRepository.existsByUsername("admin")) {
-            User admin = new User();
-            admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setNickname("系统管理员");
-            admin.setEmail("admin@example.com");
-            admin.setRole(User.Role.ADMIN);
-            admin.setEnabled(true);
-            userRepository.save(admin);
-        }
+        initUser("admin", "admin123", "系统管理员", "admin@example.com", User.Role.ADMIN);
+        initUser("user", "user123", "普通用户", "user@example.com", User.Role.USER);
+    }
 
-        if (!userRepository.existsByUsername("user")) {
+    private void initUser(String username, String rawPassword, String nickname, String email, User.Role role) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+                user.setPassword(passwordEncoder.encode(rawPassword));
+                user.setNickname(nickname);
+                user.setEmail(email);
+                user.setRole(role);
+                user.setEnabled(true);
+                userRepository.save(user);
+            }
+        } else {
             User user = new User();
-            user.setUsername("user");
-            user.setPassword(passwordEncoder.encode("user123"));
-            user.setNickname("普通用户");
-            user.setEmail("user@example.com");
-            user.setRole(User.Role.USER);
+            user.setUsername(username);
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setNickname(nickname);
+            user.setEmail(email);
+            user.setRole(role);
             user.setEnabled(true);
             userRepository.save(user);
         }
