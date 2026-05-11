@@ -696,7 +696,10 @@ const saveEdgeCondition = () => {
 }
 
 const deleteSelectedNode = async () => {
-  if (!selectedNode.value) return
+  if (!selectedNode.value) {
+    ElMessage.warning('请先选择一个节点')
+    return
+  }
   
   try {
     await ElMessageBox.confirm(
@@ -709,21 +712,34 @@ const deleteSelectedNode = async () => {
       }
     )
     
-    const node = graph.getCell(selectedNode.value.id)
-    if (node) {
-      const connectedEdges = graph.getConnectedEdges(node)
-      connectedEdges.forEach(edge => edge.remove())
-      node.remove()
-      selectedNode.value = null
-      nodeConfig.value = {}
-      ElMessage.success('节点已删除')
+    const nodeId = selectedNode.value.id
+    const node = graph.getCell(nodeId)
+    
+    if (!node) {
+      ElMessage.error('找不到节点')
+      return
     }
-  } catch {
+    
+    const connectedEdges = graph.getConnectedEdges(node)
+    connectedEdges.forEach(edge => edge.remove())
+    node.remove()
+    
+    selectedNode.value = null
+    nodeConfig.value = {}
+    ElMessage.success('节点已删除')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除节点失败:', error)
+      ElMessage.error('删除失败: ' + (error.message || error))
+    }
   }
 }
 
 const deleteSelectedEdge = async () => {
-  if (!selectedEdge.value) return
+  if (!selectedEdge.value) {
+    ElMessage.warning('请先选择一条连线')
+    return
+  }
   
   try {
     await ElMessageBox.confirm(
@@ -736,14 +752,23 @@ const deleteSelectedEdge = async () => {
       }
     )
     
-    const edge = graph.getCell(selectedEdge.value.id)
-    if (edge) {
-      edge.remove()
-      selectedEdge.value = null
-      edgeCondition.value = ''
-      ElMessage.success('连线已删除')
+    const edgeId = selectedEdge.value.id
+    const edge = graph.getCell(edgeId)
+    
+    if (!edge) {
+      ElMessage.error('找不到连线')
+      return
     }
-  } catch {
+    
+    edge.remove()
+    selectedEdge.value = null
+    edgeCondition.value = ''
+    ElMessage.success('连线已删除')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除连线失败:', error)
+      ElMessage.error('删除失败: ' + (error.message || error))
+    }
   }
 }
 

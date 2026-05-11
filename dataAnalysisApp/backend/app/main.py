@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy import text, inspect
 from typing import List, Optional, Dict, Any
 from .database import get_db, get_engine, get_settings, Base
@@ -195,10 +195,24 @@ def get_mysql_type(value_type: str) -> str:
     }
     return type_map.get(value_type, "VARCHAR(255)")
 
+def get_attributes_for_dd(db: Session, dd_id: int) -> List[DataDefinitionAttribute]:
+    return db.query(DataDefinitionAttribute).filter(
+        DataDefinitionAttribute.data_definition_id == dd_id
+    ).order_by(DataDefinitionAttribute.sort_order.asc()).all()
+
+def get_indexes_for_dd(db: Session, dd_id: int) -> List[DataDefinitionIndex]:
+    return db.query(DataDefinitionIndex).filter(
+        DataDefinitionIndex.data_definition_id == dd_id
+    ).order_by(DataDefinitionIndex.sort_order.asc()).all()
+
 def build_data_definition_response(dd: DataDefinition, db: Session) -> DataDefinitionResponse:
-    attributes = []
+    attributes = get_attributes_for_dd(db, dd.id)
+    indexes = get_indexes_for_dd(db, dd.id)
+    
+    attribute_responses = []
     is_original = True
-    for attr in dd.attributes:
+    
+    for attr in attributes:
         attr_resp = DataDefinitionAttributeResponse(
             id=attr.id,
             attribute_code=attr.attribute_code,
@@ -221,7 +235,7 @@ def build_data_definition_response(dd: DataDefinition, db: Session) -> DataDefin
                     attr_resp.dimension_code = dim.dimension_code
                     attr_resp.dimension_name = dim.dimension_name
                     attr_resp.value_type = dim.value_type.value
-        attributes.append(attr_resp)
+        attribute_responses.append(attr_resp)
     
     category_name = None
     if dd.category_id:
@@ -239,8 +253,8 @@ def build_data_definition_response(dd: DataDefinition, db: Session) -> DataDefin
         is_enabled=dd.is_enabled,
         created_at=dd.created_at,
         updated_at=dd.updated_at,
-        attributes=attributes,
-        indexes=dd.indexes,
+        attributes=attribute_responses,
+        indexes=indexes,
         category_name=category_name,
         is_original=is_original
     )
@@ -252,7 +266,7 @@ def get_data_definitions(
     category_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(DataDefinition).options(joinedload(DataDefinition.attributes), joinedload(DataDefinition.indexes))
+    query = db.query(DataDefinition)
     if is_enabled is not None:
         query = query.filter(DataDefinition.is_enabled == is_enabled)
     if is_defined is not None:
@@ -265,7 +279,7 @@ def get_data_definitions(
 
 @app.get("/api/data-definitions/{dd_id}", response_model=GenericResponse)
 def get_data_definition(dd_id: int, db: Session = Depends(get_db)):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes), joinedload(DataDefinition.indexes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     return GenericResponse(code=200, message="获取成功", data=build_data_definition_response(dd, db))
@@ -293,6 +307,9 @@ def create_dynamic_table(dd: DataDefinition, db: Session, engine):
         db.execute(text(f"DROP TABLE IF EXISTS `{table_name}`"))
         db.commit()
     
+    attributes = get_attributes_for_dd(db, dd.id)
+    indexes = get_indexes_for_dd(db, dd.id)
+    
     column_defs = [
         "id INT AUTO_INCREMENT PRIMARY KEY",
         "data_id VARCHAR(50) NOT NULL UNIQUE",
@@ -303,7 +320,7 @@ def create_dynamic_table(dd: DataDefinition, db: Session, engine):
     existing_codes = ["id", "data_id", "created_at", "updated_at"]
     column_codes = {}
     
-    for attr in sorted(dd.attributes, key=lambda x: x.sort_order):
+    for attr in sorted(attributes, key=lambda x: x.sort_order):
         base_code = get_column_code_from_attribute(attr, db)
         unique_code = generate_unique_column_code(base_code, existing_codes)
         existing_codes.append(unique_code)
@@ -320,9 +337,9 @@ def create_dynamic_table(dd: DataDefinition, db: Session, engine):
         
         column_defs.append(f"`{unique_code}` {column_type}")
     
-    for idx_info in dd.indexes:
+    for idx_info in indexes:
         attr_id = None
-        for attr in dd.attributes:
+        for attr in attributes:
             if attr.attribute_code == idx_info.attribute_code:
                 attr_id = attr.id
                 break
@@ -379,11 +396,12 @@ def create_data_definition(dd: DataDefinitionCreate, db: Session = Depends(get_d
 
 @app.post("/api/data-definitions/{dd_id}/define", response_model=GenericResponse)
 def define_data_definition(dd_id: int, db: Session = Depends(get_db)):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes), joinedload(DataDefinition.indexes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     
-    if not dd.attributes:
+    attributes = get_attributes_for_dd(db, dd.id)
+    if not attributes:
         raise HTTPException(status_code=400, detail="请先添加数据属性")
     
     engine = get_engine()
@@ -399,7 +417,7 @@ def define_data_definition(dd_id: int, db: Session = Depends(get_db)):
 
 @app.put("/api/data-definitions/{dd_id}", response_model=GenericResponse)
 def update_data_definition(dd_id: int, dd: DataDefinitionUpdate, db: Session = Depends(get_db)):
-    db_dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes), joinedload(DataDefinition.indexes)).filter(DataDefinition.id == dd_id).first()
+    db_dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not db_dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     
@@ -408,7 +426,8 @@ def update_data_definition(dd_id: int, dd: DataDefinitionUpdate, db: Session = D
         setattr(db_dd, key, value)
     
     if dd.attributes is not None:
-        for attr in db_dd.attributes:
+        existing_attrs = get_attributes_for_dd(db, db_dd.id)
+        for attr in existing_attrs:
             db.delete(attr)
         db.flush()
         for attr in dd.attributes:
@@ -424,7 +443,8 @@ def update_data_definition(dd_id: int, dd: DataDefinitionUpdate, db: Session = D
             db.add(db_attr)
     
     if dd.indexes is not None:
-        for idx_info in db_dd.indexes:
+        existing_indexes = get_indexes_for_dd(db, db_dd.id)
+        for idx_info in existing_indexes:
             db.delete(idx_info)
         db.flush()
         for idx_info in dd.indexes:
@@ -462,13 +482,14 @@ def delete_data_definition(dd_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/data-definitions/{dd_id}/columns", response_model=GenericResponse)
 def get_data_definition_columns(dd_id: int, db: Session = Depends(get_db)):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     
+    attributes = get_attributes_for_dd(db, dd.id)
     columns = []
     existing_codes = ["id", "data_id", "created_at", "updated_at"]
-    for attr in sorted(dd.attributes, key=lambda x: x.sort_order):
+    for attr in sorted(attributes, key=lambda x: x.sort_order):
         base_code = get_column_code_from_attribute(attr, db)
         unique_code = generate_unique_column_code(base_code, existing_codes)
         existing_codes.append(unique_code)
@@ -506,7 +527,7 @@ def get_dynamic_data(
     filters: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     if not dd.is_defined:
@@ -557,7 +578,7 @@ def get_dynamic_data(
 
 @app.post("/api/data-definitions/{dd_id}/data", response_model=GenericResponse)
 def create_dynamic_data(dd_id: int, data: DynamicDataCreate, db: Session = Depends(get_db)):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     if not dd.is_defined:
@@ -590,7 +611,7 @@ def create_dynamic_data(dd_id: int, data: DynamicDataCreate, db: Session = Depen
 
 @app.put("/api/data-definitions/{dd_id}/data/{data_id}", response_model=GenericResponse)
 def update_dynamic_data(dd_id: int, data_id: str, data: DynamicDataUpdate, db: Session = Depends(get_db)):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     if not dd.is_defined:
@@ -623,7 +644,7 @@ def update_dynamic_data(dd_id: int, data_id: str, data: DynamicDataUpdate, db: S
 
 @app.delete("/api/data-definitions/{dd_id}/data/{data_id}", response_model=GenericResponse)
 def delete_dynamic_data(dd_id: int, data_id: str, db: Session = Depends(get_db)):
-    dd = db.query(DataDefinition).options(joinedload(DataDefinition.attributes)).filter(DataDefinition.id == dd_id).first()
+    dd = db.query(DataDefinition).filter(DataDefinition.id == dd_id).first()
     if not dd:
         raise HTTPException(status_code=404, detail="数据定义不存在")
     if not dd.is_defined:

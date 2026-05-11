@@ -9,20 +9,20 @@ PRESET_COMPONENTS = [
             "properties": {
                 "html": {
                     "type": "string",
-                    "description": "HTML 字符串"
+                    "description": "html串"
                 },
                 "method": {
                     "type": "string",
                     "enum": ["css", "xpath", "re"],
-                    "description": "检索方式: CSS选择器, XPath, 正则表达式"
+                    "description": "检索方式"
                 },
                 "selector": {
                     "type": "string",
-                    "description": "检索路径或表达式"
+                    "description": "检索路径"
                 },
                 "attribute": {
                     "type": "string",
-                    "description": "要提取的属性名（可选），为空时提取文本内容"
+                    "description": "属性名称"
                 }
             },
             "required": ["html", "method", "selector"]
