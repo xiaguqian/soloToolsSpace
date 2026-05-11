@@ -1,0 +1,53 @@
+{
+  "name": "file-window-manager",
+  "version": "1.0.0",
+  "description": "桌面文档管理应用",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:8015 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "vite build && electron-builder",
+    "start": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "file-manager",
+    "document-management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.0",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^22.3.27",
+    "electron-builder": "^24.9.1",
+    "vite": "^5.0.0",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "element-plus": "^2.4.4",
+    "echarts": "^5.4.3",
+    "vue": "^3.3.11",
+    "vue-router": "^4.2.5",
+    "@element-plus/icons-vue": "^2.3.1"
+  },
+  "build": {
+    "appId": "com.filewindow.manager",
+    "productName": "FileWindowManager",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  }
+}
