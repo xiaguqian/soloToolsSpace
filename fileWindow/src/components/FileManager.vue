@@ -86,7 +86,7 @@
           <el-input v-model="addForm.alias" placeholder="留空则使用文件名称" />
         </el-form-item>
         <el-form-item label="标签">
-          <el-select v-model="addForm.tag" placeholder="选择或输入标签" allow-create filterable>
+          <el-select v-model="addForm.tag" placeholder="选择标签或输入新标签后回车创建" allow-create filterable>
             <el-option
               v-for="tag in allTags"
               :key="tag"
@@ -94,6 +94,7 @@
               :value="tag"
             />
           </el-select>
+          <div class="form-tip">💡 提示：可以直接输入新标签名称后按回车创建</div>
         </el-form-item>
         <el-form-item label="说明">
           <el-input v-model="addForm.description" type="textarea" :rows="3" placeholder="简单说明文件用途" />
@@ -114,7 +115,7 @@
           <el-input v-model="editForm.alias" placeholder="留空则使用文件名称" />
         </el-form-item>
         <el-form-item label="标签">
-          <el-select v-model="editForm.tag" placeholder="选择或输入标签" allow-create filterable>
+          <el-select v-model="editForm.tag" placeholder="选择标签或输入新标签后回车创建" allow-create filterable>
             <el-option
               v-for="tag in allTags"
               :key="tag"
@@ -122,6 +123,7 @@
               :value="tag"
             />
           </el-select>
+          <div class="form-tip">💡 提示：可以直接输入新标签名称后按回车创建</div>
         </el-form-item>
         <el-form-item label="说明">
           <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="简单说明文件用途" />
@@ -215,6 +217,9 @@ const items = computed(() => currentSet.value?.items || [])
 
 const allTags = computed(() => {
   const tags = new Set()
+  store.getAllTags().forEach(tag => {
+    if (tag) tags.add(tag)
+  })
   items.value.forEach(item => {
     if (item.tag) tags.add(item.tag)
   })
@@ -305,6 +310,10 @@ async function handleAddItem() {
   if (!pathInfo.success) {
     ElMessage.error('路径无效')
     return
+  }
+  
+  if (addForm.value.tag) {
+    await store.addTag(addForm.value.tag)
   }
   
   const newItem = {
@@ -479,6 +488,10 @@ function openEditDialog2() {
 }
 
 async function handleEditItem() {
+  if (editForm.value.tag) {
+    await store.addTag(editForm.value.tag)
+  }
+  
   await store.updateFileItem(currentSetId.value, editForm.value.id, {
     alias: editForm.value.alias,
     tag: editForm.value.tag,
@@ -661,6 +674,12 @@ async function handleDelete() {
 
 .path-input .el-input {
   flex: 1;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 
 .context-menu {

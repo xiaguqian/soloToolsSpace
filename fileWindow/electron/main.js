@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 
@@ -10,12 +10,133 @@ const dataPath = path.join(userDataPath, 'data')
 const configFile = path.join(dataPath, 'config.json')
 const statsFile = path.join(dataPath, 'stats.json')
 
+function createMenu() {
+  const template = [
+    {
+      label: '文件',
+      submenu: [
+        {
+          label: '新建文档',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send('navigate', '/editor')
+            }
+          }
+        },
+        {
+          label: '刷新',
+          accelerator: 'CmdOrCtrl+R',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.reload()
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '退出',
+          accelerator: 'CmdOrCtrl+Q',
+          click: () => {
+            app.quit()
+          }
+        }
+      ]
+    },
+    {
+      label: '编辑',
+      submenu: [
+        { label: '撤销', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+        { label: '重做', accelerator: 'CmdOrCtrl+Y', role: 'redo' },
+        { type: 'separator' },
+        { label: '剪切', accelerator: 'CmdOrCtrl+X', role: 'cut' },
+        { label: '复制', accelerator: 'CmdOrCtrl+C', role: 'copy' },
+        { label: '粘贴', accelerator: 'CmdOrCtrl+V', role: 'paste' },
+        { label: '全选', accelerator: 'CmdOrCtrl+A', role: 'selectAll' }
+      ]
+    },
+    {
+      label: '视图',
+      submenu: [
+        {
+          label: '放大',
+          accelerator: 'CmdOrCtrl+=',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              const currentZoom = focusedWindow.webContents.getZoomLevel()
+              focusedWindow.webContents.setZoomLevel(currentZoom + 0.5)
+            }
+          }
+        },
+        {
+          label: '缩小',
+          accelerator: 'CmdOrCtrl+-',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              const currentZoom = focusedWindow.webContents.getZoomLevel()
+              focusedWindow.webContents.setZoomLevel(currentZoom - 0.5)
+            }
+          }
+        },
+        {
+          label: '重置缩放',
+          accelerator: 'CmdOrCtrl+0',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.webContents.setZoomLevel(0)
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '开发者工具',
+          accelerator: 'F12',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.webContents.toggleDevTools()
+            }
+          }
+        },
+        {
+          label: '全屏',
+          accelerator: 'F11',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.setFullScreen(!focusedWindow.isFullScreen())
+            }
+          }
+        }
+      ]
+    },
+    {
+      label: '帮助',
+      submenu: [
+        {
+          label: '关于',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: '关于文档管理应用',
+              message: '文档管理应用',
+              detail: '版本: 1.0.0\n\n一款简洁高效的桌面文档管理工具'
+            })
+          }
+        }
+      ]
+    }
+  ]
+  
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+}
+
 function ensureDataDir() {
   if (!fs.existsSync(dataPath)) {
     fs.mkdirSync(dataPath, { recursive: true })
   }
   if (!fs.existsSync(configFile)) {
     const defaultConfig = {
+      tags: [],
       directorySets: [
         {
           id: 'default-dirs',
@@ -73,6 +194,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   ensureDataDir()
+  createMenu()
   createWindow()
   
   app.on('activate', () => {

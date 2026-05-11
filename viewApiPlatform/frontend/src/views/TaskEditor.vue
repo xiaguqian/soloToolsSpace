@@ -104,19 +104,24 @@
 
           <el-tab-pane label="节点配置" name="node">
             <div v-if="selectedNode" class="node-config">
-              <div class="node-info">
-                <el-tag type="primary">{{ selectedNode.component }}</el-tag>
-                <span class="node-id">节点: {{ selectedNode.id }}</span>
+              <div class="node-header">
+                <div class="node-info">
+                  <el-tag type="primary" size="large">{{ selectedNode.component }}</el-tag>
+                </div>
+                <el-button type="danger" size="small" @click="deleteSelectedNode">
+                  <el-icon><Delete /></el-icon>
+                  删除节点
+                </el-button>
               </div>
               <el-divider />
               
-              <el-form :model="nodeConfig" label-width="100px">
+              <el-form :model="nodeConfig" label-width="100px" size="default">
                 <div
                   v-for="(prop, key) in selectedComponentSchema?.properties"
                   :key="key"
-                  class="form-item"
+                  class="form-item-wrapper"
                 >
-                  <el-form-item :label="prop.description || key">
+                  <el-form-item :label="prop.description || key" class="form-item">
                     <template v-if="prop.type === 'object' || prop.type === 'array'">
                       <el-input
                         type="textarea"
@@ -124,10 +129,11 @@
                         :value="JSON.stringify(nodeConfig[key] || '', null, 2)"
                         @input="handleJsonInput(key, $event)"
                         :placeholder="`${prop.description || key} (JSON格式)`"
+                        autosize
                       />
                     </template>
                     <template v-else-if="prop.enum">
-                      <el-select v-model="nodeConfig[key]" style="width: 100%">
+                      <el-select v-model="nodeConfig[key]" style="width: 100%" placeholder="请选择">
                         <el-option
                           v-for="opt in prop.enum"
                           :key="opt"
@@ -146,14 +152,15 @@
                 </div>
               </el-form>
               
-              <el-button
-                type="primary"
-                size="small"
-                style="margin-top: 10px"
-                @click="saveNodeConfig"
-              >
-                保存配置
-              </el-button>
+              <div class="node-actions">
+                <el-button
+                  type="primary"
+                  @click="saveNodeConfig"
+                >
+                  <el-icon><Check /></el-icon>
+                  保存配置
+                </el-button>
+              </div>
             </div>
             <div v-else class="no-selection">
               <el-empty description="请选择一个节点进行配置" />
@@ -162,23 +169,33 @@
 
           <el-tab-pane label="连线条件" name="edge">
             <div v-if="selectedEdge" class="edge-config">
-              <div class="edge-info">
-                <span>{{ selectedEdge.source }} → {{ selectedEdge.target }}</span>
+              <div class="edge-header">
+                <div class="edge-info">
+                  <el-tag type="success">连线</el-tag>
+                </div>
+                <el-button type="danger" size="small" @click="deleteSelectedEdge">
+                  <el-icon><Delete /></el-icon>
+                  删除连线
+                </el-button>
               </div>
               <el-divider />
-              <el-form-item label="条件标签">
-                <el-input
-                  v-model="edgeCondition"
-                  placeholder="输入条件标签，如: success、failed、true 等"
-                />
-              </el-form-item>
-              <el-button
-                type="primary"
-                size="small"
-                @click="saveEdgeCondition"
-              >
-                保存条件
-              </el-button>
+              <el-form label-width="100px">
+                <el-form-item label="条件标签">
+                  <el-input
+                    v-model="edgeCondition"
+                    placeholder="输入条件标签，如: success、failed、true 等"
+                  />
+                </el-form-item>
+              </el-form>
+              <div class="edge-actions">
+                <el-button
+                  type="primary"
+                  @click="saveEdgeCondition"
+                >
+                  <el-icon><Check /></el-icon>
+                  保存条件
+                </el-button>
+              </div>
             </div>
             <div v-else class="no-selection">
               <el-empty description="请选择一条连线进行配置" />
@@ -205,7 +222,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Graph } from '@antv/x6'
 import { componentApi, taskApi } from '@/api'
 
@@ -678,6 +695,58 @@ const saveEdgeCondition = () => {
   }
 }
 
+const deleteSelectedNode = async () => {
+  if (!selectedNode.value) return
+  
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除该节点吗？相关的连线也会被删除。',
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const node = graph.getCell(selectedNode.value.id)
+    if (node) {
+      const connectedEdges = graph.getConnectedEdges(node)
+      connectedEdges.forEach(edge => edge.remove())
+      node.remove()
+      selectedNode.value = null
+      nodeConfig.value = {}
+      ElMessage.success('节点已删除')
+    }
+  } catch {
+  }
+}
+
+const deleteSelectedEdge = async () => {
+  if (!selectedEdge.value) return
+  
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除该连线吗？',
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const edge = graph.getCell(selectedEdge.value.id)
+    if (edge) {
+      edge.remove()
+      selectedEdge.value = null
+      edgeCondition.value = ''
+      ElMessage.success('连线已删除')
+    }
+  } catch {
+  }
+}
+
 const saveTask = async () => {
   if (!taskForm.value.name || !taskForm.value.task_id) {
     ElMessage.error('请填写任务名称和任务ID')
@@ -863,7 +932,17 @@ onMounted(async () => {
 }
 
 .node-config, .edge-config {
+  padding: 0;
+}
+
+.node-header, .edge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  margin-bottom: 15px;
 }
 
 .node-info, .edge-info {
@@ -872,13 +951,39 @@ onMounted(async () => {
   gap: 10px;
 }
 
-.node-id {
-  font-size: 12px;
-  color: #909399;
+.form-item-wrapper {
+  margin-bottom: 20px;
 }
 
 .form-item {
-  margin-bottom: 15px;
+  margin-bottom: 0;
+}
+
+.form-item :deep(.el-form-item__label) {
+  padding-right: 10px;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.5;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.form-item :deep(.el-input__wrapper) {
+  padding: 5px 15px;
+}
+
+.form-item :deep(.el-textarea__inner) {
+  padding: 8px 12px;
+  line-height: 1.6;
+}
+
+.node-actions, .edge-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e4e7ed;
 }
 
 .no-selection {

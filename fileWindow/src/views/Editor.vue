@@ -8,20 +8,16 @@
       </div>
       <div class="header-actions">
         <el-button 
-          v-if="isNewFile"
+          v-if="!isNewFile"
           @click="showSaveAsDialog = true"
         >
           另存为
         </el-button>
         <el-button 
-          v-else
-          @click="saveFile"
+          @click="isNewFile ? (showSaveAsDialog = true) : saveFile()"
           type="primary"
         >
           保存
-        </el-button>
-        <el-button @click="showSaveAsDialog = true">
-          另存为
         </el-button>
       </div>
     </div>

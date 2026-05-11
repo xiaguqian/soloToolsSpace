@@ -210,6 +210,28 @@ const actions = {
       state.config.useAppForTextFiles = value
       this.saveConfig()
     }
+  },
+  
+  getAllTags() {
+    if (!state.config) return []
+    if (!state.config.tags) state.config.tags = []
+    return state.config.tags
+  },
+  
+  async addTag(tag) {
+    if (!state.config || !tag) return
+    if (!state.config.tags) state.config.tags = []
+    if (!state.config.tags.includes(tag)) {
+      state.config.tags.push(tag)
+      await this.saveConfig()
+    }
+  },
+  
+  async removeTag(tag) {
+    if (!state.config || !tag) return
+    if (!state.config.tags) return
+    state.config.tags = state.config.tags.filter(t => t !== tag)
+    await this.saveConfig()
   }
 }
 
