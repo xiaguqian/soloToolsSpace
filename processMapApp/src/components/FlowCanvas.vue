@@ -103,7 +103,14 @@ const canvasContainer = ref(null)
 const dropArea = ref(null)
 const viewport = ref({ x: 0, y: 0, zoom: 1 })
 
-const { viewportHelper, fitView } = useVueFlow()
+const { 
+  viewportHelper, 
+  fitView, 
+  addNodes, 
+  addEdges,
+  applyNodeChanges, 
+  applyEdgeChanges 
+} = useVueFlow()
 
 const screenToFlowPosition = (screenPos) => {
   if (viewportHelper.value && viewportHelper.value.screenToFlowCoordinate) {
@@ -224,10 +231,12 @@ const onDrop = (event) => {
 }
 
 const onNodesChange = (changes) => {
+  console.log('Nodes change:', changes)
   emit('nodesChange', changes)
 }
 
 const onEdgesChange = (changes) => {
+  console.log('Edges change:', changes)
   emit('edgesChange', changes)
 }
 

@@ -117,6 +117,7 @@ import TopToolbar from './components/TopToolbar.vue'
 import LeftSidebar from './components/LeftSidebar.vue'
 import FlowCanvas from './components/FlowCanvas.vue'
 import RightSidebar from './components/RightSidebar.vue'
+import { applyNodeChanges, applyEdgeChanges } from '@vue-flow/core'
 import { generateId, exportAsJSON, importFromJSON, downloadFile, readFileAsText, formatDate } from './utils/helpers.js'
 import { exampleFlows, addExampleEdges } from './utils/examples.js'
 
@@ -214,11 +215,15 @@ const handleRedo = () => {
   isHistoryAction.value = false
 }
 
-const onNodesChange = () => {
+const onNodesChange = (changes) => {
+  console.log('onNodesChange:', changes)
+  nodes.value = applyNodeChanges(changes, nodes.value)
   saveToHistory()
 }
 
-const onEdgesChange = () => {
+const onEdgesChange = (changes) => {
+  console.log('onEdgesChange:', changes)
+  edges.value = applyEdgeChanges(changes, edges.value)
   saveToHistory()
 }
 
