@@ -103,7 +103,19 @@ const canvasContainer = ref(null)
 const dropArea = ref(null)
 const viewport = ref({ x: 0, y: 0, zoom: 1 })
 
-const { screenToFlowPosition, fitView } = useVueFlow()
+const { viewportHelper, fitView } = useVueFlow()
+
+const screenToFlowPosition = (screenPos) => {
+  if (viewportHelper.value && viewportHelper.value.screenToFlowCoordinate) {
+    return viewportHelper.value.screenToFlowCoordinate(screenPos)
+  }
+  
+  const { x, y, zoom } = viewport.value
+  return {
+    x: (screenPos.x - x) / zoom,
+    y: (screenPos.y - y) / zoom
+  }
+}
 
 const gridSnap = computed(() => ({ x: props.gridSize, y: props.gridSize }))
 
