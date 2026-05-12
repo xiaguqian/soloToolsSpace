@@ -1,0 +1,36 @@
+{
+  "notes": [
+    {
+      "id": "1",
+      "title": "故宫一日游完整攻略",
+      "author": "旅行者小王"
+    },
+    {
+      "id": "2",
+      "title": "西湖日落最佳观赏点",
+      "author": "摄影师小李"
+    }
+  ],
+  "scenics": [
+    {
+      "id": "1",
+      "name": "故宫博物院",
+      "address": "北京市东城区景山前街4号"
+    },
+    {
+      "id": "2",
+      "name": "西湖风景区",
+      "address": "浙江省杭州市西湖区"
+    }
+  ],
+  "images": [
+    {
+      "id": "1",
+      "url": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400"
+    },
+    {
+      "id": "2",
+      "url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
+    }
+  ]
+}

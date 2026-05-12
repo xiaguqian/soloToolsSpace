@@ -1,0 +1,56 @@
+{
+  "list": [
+    {
+      "id": "1",
+      "title": "故宫一日游完整攻略，带你玩转紫禁城",
+      "coverImage": "https://images.unsplash.com/photo-1584467541268-b040f83be3fd?w=400",
+      "author": "旅行者小王",
+      "authorAvatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100",
+      "scenicId": "1",
+      "scenicName": "故宫博物院",
+      "createTime": "2024-01-15",
+      "likeCount": 128,
+      "commentCount": 32,
+      "favoriteCount": 56
+    },
+    {
+      "id": "2",
+      "title": "西湖日落最佳观赏点，这几个地方一定要去",
+      "coverImage": "https://images.unsplash.com/photo-1599054799131-3b3f465219ab?w=400",
+      "author": "摄影师小李",
+      "authorAvatar": "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100",
+      "scenicId": "2",
+      "scenicName": "西湖风景区",
+      "createTime": "2024-01-12",
+      "likeCount": 256,
+      "commentCount": 64,
+      "favoriteCount": 128
+    },
+    {
+      "id": "3",
+      "title": "黄山日出全记录，云海翻腾太震撼了",
+      "coverImage": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400",
+      "author": "户外达人",
+      "authorAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
+      "scenicId": "3",
+      "scenicName": "黄山风景区",
+      "createTime": "2024-01-10",
+      "likeCount": 512,
+      "commentCount": 89,
+      "favoriteCount": 234
+    },
+    {
+      "id": "4",
+      "title": "迪士尼必玩项目排行榜，带娃攻略",
+      "coverImage": "https://images.unsplash.com/photo-1597466599360-3b97768b371a?w=400",
+      "author": "宝妈分享",
+      "authorAvatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
+      "scenicId": "5",
+      "scenicName": "迪士尼乐园",
+      "createTime": "2024-01-08",
+      "likeCount": 320,
+      "commentCount": 78,
+      "favoriteCount": 189
+    }
+  ]
+}
