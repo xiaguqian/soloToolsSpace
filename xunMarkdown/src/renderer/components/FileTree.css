@@ -1,0 +1,178 @@
+.file-tree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--sidebar-bg, #f5f5f5);
+  overflow-y: auto;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+[data-theme="dark"] .file-tree {
+  --sidebar-bg: #252526;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  color: var(--text-color, #333);
+}
+
+[data-theme="dark"] .workspace-header {
+  --border-color: #444;
+  --text-color: #e0e0e0;
+}
+
+.refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+}
+
+.refresh-btn:hover {
+  opacity: 1;
+}
+
+.file-tree-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.file-tree-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  gap: 8px;
+  transition: background-color 0.15s;
+  color: var(--text-color, #333);
+}
+
+.file-tree-item:hover {
+  background-color: var(--hover-bg, #e8e8e8);
+}
+
+.file-tree-item.active {
+  background-color: var(--active-bg, #d0e0ff);
+}
+
+[data-theme="dark"] .file-tree-item {
+  --text-color: #e0e0e0;
+  --hover-bg: #3a3a3a;
+  --active-bg: #454555;
+}
+
+.tree-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tree-name {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.directory-children {
+  padding-left: 0;
+}
+
+.no-workspace,
+.empty-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted, #888);
+}
+
+[data-theme="dark"] .no-workspace,
+[data-theme="dark"] .empty-tree {
+  --text-muted: #777;
+}
+
+.no-workspace p,
+.empty-tree p {
+  margin-bottom: 16px;
+}
+
+.open-workspace-btn,
+.create-btn {
+  padding: 8px 16px;
+  background-color: var(--primary-color, #0078d4);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.open-workspace-btn:hover,
+.create-btn:hover {
+  background-color: var(--primary-hover, #106ebe);
+}
+
+.context-menu {
+  position: fixed;
+  background-color: var(--context-bg, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 140px;
+}
+
+[data-theme="dark"] .context-menu {
+  --context-bg: #2d2d2d;
+  --border-color: #555;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-color, #333);
+}
+
+.context-menu-item:hover {
+  background-color: var(--hover-bg, #f0f0f0);
+}
+
+[data-theme="dark"] .context-menu-item {
+  --text-color: #e0e0e0;
+  --hover-bg: #444;
+}
+
+.context-menu-item.danger {
+  color: #dc3545;
+}
+
+.context-menu-item.danger:hover {
+  background-color: #f8d7da;
+}
+
+[data-theme="dark"] .context-menu-item.danger:hover {
+  background-color: #4a0000;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background-color: var(--border-color, #e0e0e0);
+  margin: 4px 0;
+}

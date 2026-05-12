@@ -1,0 +1,120 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background-color: var(--toolbar-bg, #f8f9fa);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  user-select: none;
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .toolbar {
+  --toolbar-bg: #2d2d2d;
+  --border-color: #444;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color, #e0e0e0);
+  margin: 0 4px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+  color: var(--text-color, #333);
+}
+
+.toolbar-btn:hover {
+  background-color: var(--hover-bg, #e9ecef);
+}
+
+.toolbar-btn.active {
+  background-color: var(--active-bg, #d0e0ff);
+}
+
+[data-theme="dark"] .toolbar-btn {
+  --text-color: #e0e0e0;
+  --hover-bg: #444;
+  --active-bg: #556;
+}
+
+.toolbar-btn .icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.toolbar-select {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  background-color: var(--input-bg, #fff);
+  color: var(--text-color, #333);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+[data-theme="dark"] .toolbar-select {
+  --input-bg: #3d3d3d;
+  --border-color: #555;
+  --text-color: #e0e0e0;
+}
+
+.toolbar-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: none;
+  flex-direction: column;
+  background-color: var(--dropdown-bg, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 120px;
+  z-index: 100;
+}
+
+.toolbar-dropdown:hover .dropdown-menu {
+  display: flex;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s;
+  color: var(--text-color, #333);
+  font-size: 13px;
+}
+
+.dropdown-item:hover {
+  background-color: var(--hover-bg, #f0f0f0);
+}
+
+[data-theme="dark"] .dropdown-menu {
+  --dropdown-bg: #2d2d2d;
+  --text-color: #e0e0e0;
+  --hover-bg: #444;
+}

@@ -1,0 +1,63 @@
+{
+  "name": "xun-markdown",
+  "version": "0.1.0",
+  "description": "一款现代化的Markdown编辑器 - 集成Typora的流畅体验、Obsidian的知识管理和AI辅助",
+  "main": "dist/main/index.js",
+  "author": "xunMarkdown Team",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently -n REACT,ELECTRON -c cyan,magenta \"npm run dev:renderer\" \"wait-on http://localhost:3000 && npm run dev:main\"",
+    "dev:main": "tsc -p tsconfig.main.json -w",
+    "dev:renderer": "vite",
+    "build": "npm run build:renderer && npm run build:main && electron-builder",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "start": "electron .",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "katex": "^0.16.10",
+    "marked": "^12.0.2",
+    "mermaid": "^10.9.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3",
+    "recoil": "^0.7.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/react": "^18.2.67",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^29.1.4",
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.4.3",
+    "vite": "^5.2.6",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.xunmarkdown.app",
+    "productName": "xunMarkdown",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Office"
+    }
+  }
+}
