@@ -134,7 +134,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { createPlan, generateGuide } from '@/api/plan'
+import { createPlan, generateGuide as generateGuideApi } from '@/api/plan'
 import { getScenicList } from '@/api/scenic'
 import { showToast } from 'vant'
 
@@ -223,7 +223,7 @@ async function generateGuide() {
   
   try {
     generatingGuide.value = true
-    const res = await generateGuide({
+    const res = await generateGuideApi({
       scenicIds: form.scenicIds,
       travelDate: form.travelDate,
       peopleCount: form.peopleCount
