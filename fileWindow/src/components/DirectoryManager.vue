@@ -72,7 +72,14 @@
       </div>
     </div>
 
-    <el-dialog v-model="showAddDialog" title="添加常用目录" width="500px">
+    <el-dialog 
+      v-model="showAddDialog" 
+      title="添加常用目录" 
+      width="500px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      destroy-on-close
+    >
       <el-form :model="addForm" label-width="80px">
         <el-form-item label="选择目录">
           <div class="path-input">
@@ -84,7 +91,13 @@
           <el-input v-model="addForm.alias" placeholder="留空则使用目录名称" />
         </el-form-item>
         <el-form-item label="标签">
-          <el-select v-model="addForm.tag" placeholder="选择标签或输入新标签后回车创建" allow-create filterable>
+          <el-select 
+            v-model="addForm.tag" 
+            placeholder="选择标签或输入新标签后回车创建" 
+            allow-create 
+            filterable
+            :key="allTags.length"
+          >
             <el-option
               v-for="tag in allTags"
               :key="tag"
@@ -99,7 +112,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddDialog = false">取消</el-button>
+        <el-button @click="handleCancelAdd">取消</el-button>
         <el-button type="primary" @click="handleAddItem">添加</el-button>
       </template>
     </el-dialog>
@@ -222,6 +235,7 @@ watch(() => store.state.currentDirectorySetId, (val) => {
 onMounted(() => {
   if (store.state.currentDirectorySetId) {
     currentSetId.value = store.state.currentDirectorySetId
+    store.incrementDirectorySetUsage(store.state.currentDirectorySetId)
   }
 })
 
@@ -272,6 +286,11 @@ async function selectDirectory() {
   }
 }
 
+function handleCancelAdd() {
+  showAddDialog.value = false
+  resetAddForm()
+}
+
 async function handleAddItem() {
   if (!addForm.value.path) {
     ElMessage.warning('请选择目录')
@@ -284,8 +303,9 @@ async function handleAddItem() {
     return
   }
   
-  if (addForm.value.tag) {
-    await store.addTag(addForm.value.tag)
+  const tagToSave = addForm.value.tag || ''
+  if (tagToSave) {
+    await store.addTag(tagToSave)
   }
   
   const newItem = {
@@ -293,15 +313,16 @@ async function handleAddItem() {
     path: addForm.value.path,
     name: pathInfo.name,
     alias: addForm.value.alias || '',
-    tag: addForm.value.tag || '',
+    tag: tagToSave,
     description: addForm.value.description || '',
     createdAt: new Date().toISOString()
   }
   
   await store.addDirectoryItem(currentSetId.value, newItem)
-  ElMessage.success('添加成功')
+  
   showAddDialog.value = false
   resetAddForm()
+  ElMessage.success('添加成功')
 }
 
 function resetAddForm() {

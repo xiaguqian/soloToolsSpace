@@ -671,33 +671,98 @@ const handleJsonInput = (key, value) => {
 }
 
 const saveNodeConfig = () => {
-  if (!selectedNode.value) return
+  if (!selectedNode.value) {
+    ElMessage.warning('请先选择一个节点')
+    return
+  }
   
-  const node = graph.getCell(selectedNode.value.id)
-  if (node) {
+  if (!selectedNode.value.id) {
+    ElMessage.error('节点ID不存在')
+    return
+  }
+  
+  if (!graph) {
+    ElMessage.error('图形实例未初始化')
+    return
+  }
+  
+  try {
+    const node = graph.getCell(selectedNode.value.id)
+    if (!node) {
+      ElMessage.error('找不到节点')
+      return
+    }
+    
     node.setData({
       ...selectedNode.value,
       input: JSON.parse(JSON.stringify(nodeConfig.value))
     })
     selectedNode.value = node.getData()
     ElMessage.success('节点配置已保存')
+  } catch (error) {
+    console.error('保存节点配置失败:', error)
+    ElMessage.error('保存失败: ' + (error.message || error))
   }
 }
 
 const saveEdgeCondition = () => {
-  if (!selectedEdge.value) return
+  if (!selectedEdge.value) {
+    ElMessage.warning('请先选择一条连线')
+    return
+  }
   
-  const edge = graph.getCell(selectedEdge.value.id)
-  if (edge) {
-    edge.setData({ condition: edgeCondition.value })
-    selectedEdge.value = edge.getData()
+  if (!selectedEdge.value.id) {
+    ElMessage.error('连线ID不存在')
+    return
+  }
+  
+  if (!graph) {
+    ElMessage.error('图形实例未初始化')
+    return
+  }
+  
+  try {
+    const edge = graph.getCell(selectedEdge.value.id)
+    if (!edge) {
+      ElMessage.error('找不到连线')
+      return
+    }
+    
+    const currentData = edge.getData() || {}
+    edge.setData({
+      ...currentData,
+      condition: edgeCondition.value
+    })
+    
+    selectedEdge.value = {
+      id: selectedEdge.value.id,
+      source: selectedEdge.value.source,
+      target: selectedEdge.value.target,
+      condition: edgeCondition.value
+    }
+    
     ElMessage.success('连线条件已保存')
+  } catch (error) {
+    console.error('保存连线条件失败:', error)
+    ElMessage.error('保存失败: ' + (error.message || error))
   }
 }
 
 const deleteSelectedNode = async () => {
+  console.log('deleteSelectedNode called, selectedNode:', selectedNode.value)
+  
   if (!selectedNode.value) {
     ElMessage.warning('请先选择一个节点')
+    return
+  }
+  
+  if (!selectedNode.value.id) {
+    ElMessage.error('节点ID不存在')
+    return
+  }
+  
+  if (!graph) {
+    ElMessage.error('图形实例未初始化')
     return
   }
   
@@ -713,7 +778,12 @@ const deleteSelectedNode = async () => {
     )
     
     const nodeId = selectedNode.value.id
+    console.log('Deleting node with ID:', nodeId)
+    console.log('Graph exists:', !!graph)
+    console.log('graph.getCell:', typeof graph.getCell)
+    
     const node = graph.getCell(nodeId)
+    console.log('Found node:', node)
     
     if (!node) {
       ElMessage.error('找不到节点')
@@ -721,6 +791,8 @@ const deleteSelectedNode = async () => {
     }
     
     const connectedEdges = graph.getConnectedEdges(node)
+    console.log('Connected edges:', connectedEdges)
+    
     connectedEdges.forEach(edge => edge.remove())
     node.remove()
     
@@ -728,6 +800,7 @@ const deleteSelectedNode = async () => {
     nodeConfig.value = {}
     ElMessage.success('节点已删除')
   } catch (error) {
+    console.log('Error caught:', error)
     if (error !== 'cancel') {
       console.error('删除节点失败:', error)
       ElMessage.error('删除失败: ' + (error.message || error))
@@ -736,8 +809,20 @@ const deleteSelectedNode = async () => {
 }
 
 const deleteSelectedEdge = async () => {
+  console.log('deleteSelectedEdge called, selectedEdge:', selectedEdge.value)
+  
   if (!selectedEdge.value) {
     ElMessage.warning('请先选择一条连线')
+    return
+  }
+  
+  if (!selectedEdge.value.id) {
+    ElMessage.error('连线ID不存在')
+    return
+  }
+  
+  if (!graph) {
+    ElMessage.error('图形实例未初始化')
     return
   }
   
@@ -753,7 +838,10 @@ const deleteSelectedEdge = async () => {
     )
     
     const edgeId = selectedEdge.value.id
+    console.log('Deleting edge with ID:', edgeId)
+    
     const edge = graph.getCell(edgeId)
+    console.log('Found edge:', edge)
     
     if (!edge) {
       ElMessage.error('找不到连线')
@@ -765,6 +853,7 @@ const deleteSelectedEdge = async () => {
     edgeCondition.value = ''
     ElMessage.success('连线已删除')
   } catch (error) {
+    console.log('Error caught:', error)
     if (error !== 'cancel') {
       console.error('删除连线失败:', error)
       ElMessage.error('删除失败: ' + (error.message || error))

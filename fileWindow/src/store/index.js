@@ -13,9 +13,27 @@ const actions = {
     if (window.electronAPI) {
       const config = await window.electronAPI.getConfig()
       if (config) {
+        if (!config.tags) config.tags = []
+        if (!config.directorySets) config.directorySets = []
+        if (!config.fileSets) config.fileSets = []
+        
+        const allTags = new Set(config.tags || [])
+        config.directorySets.forEach(set => {
+          (set.items || []).forEach(item => {
+            if (item.tag) allTags.add(item.tag)
+          })
+        })
+        config.fileSets.forEach(set => {
+          (set.items || []).forEach(item => {
+            if (item.tag) allTags.add(item.tag)
+          })
+        })
+        config.tags = Array.from(allTags)
+        
         state.config = config
         state.currentDirectorySetId = config.defaultDirectorySetId
         state.currentFileSetId = config.defaultFileSetId
+        await this.saveConfig()
       }
     }
   },

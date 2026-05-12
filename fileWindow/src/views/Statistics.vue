@@ -197,6 +197,10 @@ watch(activeTab, () => {
   updateCharts()
 })
 
+watch(() => store.state.stats, () => {
+  updateCharts()
+}, { deep: true })
+
 onMounted(() => {
   const handleResize = () => {
     dirSetChart?.resize()
