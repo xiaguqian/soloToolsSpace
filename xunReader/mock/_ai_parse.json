@@ -1,0 +1,16 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "type": "book",
+    "data": {
+      "id": "book-001",
+      "title": "斗破苍穹",
+      "author": "天蚕土豆",
+      "cover": "",
+      "description": "这里是属于斗气的世界，没有花俏艳丽的魔法，有的，仅仅是繁衍到巅峰的斗气！",
+      "isCompleted": true,
+      "lastUpdate": "2024-01-15"
+    }
+  }
+}
