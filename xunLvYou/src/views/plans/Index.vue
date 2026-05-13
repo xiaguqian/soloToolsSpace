@@ -66,7 +66,7 @@ async function cancelPlan(plan) {
     showToast('计划已取消')
     loadPlans()
   } catch (error) {
-    if (error !== 'cancel') {
+    if (error === 'cancel') {
       router.push({
         path: '/smart-travel',
         query: { planId: plan.id }
