@@ -1,5 +1,5 @@
 <template>
-  <div class="waterfall-container">
+  <div class="waterfall-wrapper">
     <div v-if="list.length === 0" class="empty-state">
       暂无数据
     </div>
@@ -7,14 +7,14 @@
       <div v-for="item in list" :key="item.id" class="waterfall-item" @click="$emit('click', item)">
         <van-image
           :src="item.coverImage"
-          :width="100"
+          width="100%"
           :height="item.height || 160"
           fit="cover"
           radius="12"
           lazy-load
         />
         <div class="item-content">
-          <div class="item-title text-ellipsis">{{ item.name }}</div>
+          <div class="item-title">{{ item.name }}</div>
           <div class="item-info">
             <span class="price" v-if="item.isPaid">{{ item.price }}元</span>
             <span class="price" v-else>免费</span>
@@ -43,10 +43,13 @@ defineEmits(['click'])
 </script>
 
 <style scoped>
+.waterfall-wrapper {
+  padding: 12px;
+}
+
 .waterfall-container {
   column-count: 2;
   column-gap: 12px;
-  padding: 12px;
 }
 
 .waterfall-item {
@@ -67,6 +70,11 @@ defineEmits(['click'])
   font-weight: 500;
   color: #323233;
   margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .item-info {
