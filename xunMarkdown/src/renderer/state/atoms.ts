@@ -48,7 +48,7 @@ export const activeTabIdState = atom<string>({
 
 export const editorModeState = atom<EditorMode>({
   key: 'editorModeState',
-  default: 'split'
+  default: 'wysiwyg'
 });
 
 export const themeState = atom<Theme>({

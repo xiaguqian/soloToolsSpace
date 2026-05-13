@@ -24,7 +24,6 @@ const createWindow = (isBlank: boolean = false): BrowserWindow => {
 
   if (process.env.NODE_ENV === 'development') {
     window.loadURL('http://localhost:3000');
-    window.webContents.openDevTools();
   } else {
     window.loadFile(path.join(__dirname, '../renderer/index.html'));
   }

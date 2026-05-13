@@ -267,3 +267,50 @@
 .focus-mode .markdown-preview:hover p {
   opacity: 1;
 }
+
+.wysiwyg-panel {
+  position: relative;
+  background-color: var(--preview-bg, #fafafa);
+}
+
+[data-theme="dark"] .wysiwyg-panel {
+  --preview-bg: #252526;
+}
+
+.wysiwyg-editor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background: transparent !important;
+  color: transparent !important;
+  caret-color: var(--text-color, #000) !important;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 24px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+[data-theme="dark"] .wysiwyg-editor {
+  caret-color: #fff !important;
+}
+
+.wysiwyg-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow-y: auto;
+  background-color: var(--preview-bg, #fafafa);
+}
+
+[data-theme="dark"] .wysiwyg-preview {
+  --preview-bg: #252526;
+}

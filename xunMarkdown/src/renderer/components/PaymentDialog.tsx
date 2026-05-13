@@ -8,7 +8,7 @@ interface PaymentDialogProps {
   message?: string;
 }
 
-const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, feature, message }) => {
+const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, message }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {

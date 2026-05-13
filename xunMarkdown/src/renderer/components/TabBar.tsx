@@ -18,15 +18,17 @@ const TabBar: React.FC = () => {
     }
     
     if (tabs.length === 1) {
-      setTabs([{
-        id: `tab-${Date.now()}`,
+      const newTabId = `tab-${Date.now()}`;
+      const newTab = {
+        id: newTabId,
         filePath: null,
         fileName: 'untitled.md',
         content: '',
         isModified: false,
         cursorPosition: { line: 0, column: 0 }
-      }]);
-      setActiveTabId(`tab-${Date.now()}`);
+      };
+      setTabs([newTab]);
+      setActiveTabId(newTabId);
     } else {
       const newTabs = tabs.filter(t => t.id !== tabId);
       setTabs(newTabs);

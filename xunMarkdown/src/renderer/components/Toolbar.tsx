@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 import { editorModeState, EditorMode, themeState, focusModeState, outlineVisibleState, sidebarVisibleState } from '../state/atoms';
 import './Toolbar.css';
 
@@ -47,15 +47,19 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <div className="toolbar-group">
         <button className="toolbar-btn" onClick={onNewFile} title="新建文件 (Ctrl+N)">
           <span className="icon">📄</span>
+          <span className="btn-text">新建</span>
         </button>
         <button className="toolbar-btn" onClick={onOpenFile} title="打开文件 (Ctrl+O)">
           <span className="icon">📂</span>
+          <span className="btn-text">打开</span>
         </button>
         <button className="toolbar-btn" onClick={onSave} title="保存 (Ctrl+S)">
           <span className="icon">💾</span>
+          <span className="btn-text">保存</span>
         </button>
         <button className="toolbar-btn" onClick={onSaveAs} title="另存为 (Ctrl+Shift+S)">
           <span className="icon">📥</span>
+          <span className="btn-text">另存为</span>
         </button>
       </div>
 

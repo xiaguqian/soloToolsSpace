@@ -179,7 +179,7 @@ public class UserService {
     }
 
     public void updateUserLevel(User user) {
-        int level = 0;
+        Integer level = 0;
         if (user.getRecipeCount() != null && user.getRecipeCount() > 0) {
             level = 1;
         }

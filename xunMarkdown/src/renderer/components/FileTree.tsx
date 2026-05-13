@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { workspacePathState, fileTreeState, FileNode, tabsState, activeTabIdState } from '../state/atoms';
+import { useRecoilState } from 'recoil';
+import { workspacePathState, fileTreeState, FileNode, tabsState, activeTabIdState, sidebarVisibleState } from '../state/atoms';
 import './FileTree.css';
 
 const getDirname = (filePath: string): string => {
@@ -22,10 +22,11 @@ const getBasename = (filePath: string): string => {
 };
 
 const FileTree: React.FC = () => {
-  const workspacePath = useRecoilValue(workspacePathState);
+  const [workspacePath, setWorkspacePath] = useRecoilState(workspacePathState);
   const [fileTree, setFileTree] = useRecoilState(fileTreeState);
   const [tabs, setTabs] = useRecoilState(tabsState);
   const [activeTabId, setActiveTabId] = useRecoilState(activeTabIdState);
+  const [_, setSidebarVisible] = useRecoilState(sidebarVisibleState);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set([workspacePath || '']));
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; item: FileNode | null; isRoot: boolean }>({
     visible: false,
@@ -229,7 +230,17 @@ const FileTree: React.FC = () => {
             onClick={async () => {
               const result = await window.electronAPI.openFolderDialog();
               if (result.success && result.folderPath) {
-                // 这个会在App.tsx中处理
+                setWorkspacePath(result.folderPath);
+                const filesResult = await window.electronAPI.listFiles(result.folderPath);
+                if (filesResult.success && filesResult.files) {
+                  const nodes = filesResult.files.map(f => ({
+                    name: f.name,
+                    path: f.path,
+                    isDirectory: f.isDirectory
+                  }));
+                  setFileTree(nodes);
+                }
+                setSidebarVisible(true);
               }
             }}
           >

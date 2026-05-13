@@ -7,17 +7,17 @@ import {
   focusModeState,
   themeState
 } from '../state/atoms';
-import { renderMarkdown, applyFormat, applyHeading, applyList, insertTable, insertLink, insertImage } from '../utils/markdownRenderer';
+import { renderMarkdown, insertImage } from '../utils/markdownRenderer';
 import './Editor.css';
 
 interface EditorProps {
   onInsertLink: (url: string, altText?: string) => void;
-  onInsertImage: (path: string, altText?: string) => void;
+  onInsertImage: (imgPath: string, altText?: string) => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ onInsertLink, onInsertImage }) => {
+const Editor: React.FC<EditorProps> = ({ onInsertLink: _onInsertLink, onInsertImage: onInsertImageProp }) => {
   const [tabs, setTabs] = useRecoilState(tabsState);
-  const [activeTabId, setActiveTabId] = useRecoilState(activeTabIdState);
+  const activeTabId = useRecoilValue(activeTabIdState);
   const editorMode = useRecoilValue(editorModeState);
   const focusMode = useRecoilValue(focusModeState);
   const theme = useRecoilValue(themeState);
@@ -57,89 +57,6 @@ const Editor: React.FC<EditorProps> = ({ onInsertLink, onInsertImage }) => {
         sourceEditorRef.current.setSelectionRange(newStart, newEnd);
       }
     }, 0);
-  };
-
-  const handleFormat = (format: 'bold' | 'italic' | 'code' | 'strikethrough' | 'quote' | 'code-block') => {
-    if (!sourceEditorRef.current || !activeTab) return;
-    
-    const { selectionStart, selectionEnd } = sourceEditorRef.current;
-    const { newText, newStart, newEnd } = applyFormat(
-      activeTab.content, 
-      selectionStart, 
-      selectionEnd, 
-      format
-    );
-    updateSelection(newText, newStart, newEnd);
-  };
-
-  const handleHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) => {
-    if (!sourceEditorRef.current || !activeTab) return;
-    
-    const { selectionStart, selectionEnd } = sourceEditorRef.current;
-    const { newText, newStart, newEnd } = applyHeading(
-      activeTab.content, 
-      selectionStart, 
-      selectionEnd, 
-      level
-    );
-    updateSelection(newText, newStart, newEnd);
-  };
-
-  const handleList = (type: 'bullet' | 'numbered' | 'task') => {
-    if (!sourceEditorRef.current || !activeTab) return;
-    
-    const { selectionStart, selectionEnd } = sourceEditorRef.current;
-    const { newText, newStart, newEnd } = applyList(
-      activeTab.content, 
-      selectionStart, 
-      selectionEnd, 
-      type
-    );
-    updateSelection(newText, newStart, newEnd);
-  };
-
-  const handleInsertTable = () => {
-    if (!sourceEditorRef.current || !activeTab) return;
-    
-    const { selectionStart } = sourceEditorRef.current;
-    const { newText, newStart, newEnd } = insertTable(activeTab.content, selectionStart);
-    updateSelection(newText, newStart, newEnd);
-  };
-
-  const handleInsertLink = () => {
-    const url = prompt('请输入链接地址:', 'https://');
-    if (url) {
-      if (!sourceEditorRef.current || !activeTab) return;
-      const { selectionStart, selectionEnd } = sourceEditorRef.current;
-      const altText = prompt('请输入链接文字:') || undefined;
-      const { newText, newStart, newEnd } = insertLink(
-        activeTab.content, 
-        selectionStart, 
-        selectionEnd, 
-        url, 
-        altText
-      );
-      updateSelection(newText, newStart, newEnd);
-      onInsertLink(url, altText);
-    }
-  };
-
-  const handleInsertImage = () => {
-    const imagePath = prompt('请输入图片路径或URL:', '');
-    if (imagePath) {
-      if (!sourceEditorRef.current || !activeTab) return;
-      const { selectionStart, selectionEnd } = sourceEditorRef.current;
-      const altText = prompt('请输入图片描述:') || undefined;
-      const { newText, newStart, newEnd } = insertImage(
-        activeTab.content, 
-        selectionStart, 
-        selectionEnd, 
-        imagePath, 
-        altText
-      );
-      updateSelection(newText, newStart, newEnd);
-      onInsertImage(imagePath, altText);
-    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -186,7 +103,7 @@ const Editor: React.FC<EditorProps> = ({ onInsertLink, onInsertImage }) => {
           reader.onload = async () => {
             const dataUrl = reader.result as string;
             
-            const dirPath = getDirname(activeTab.filePath);
+            const dirPath = getDirname(activeTab.filePath!);
             const attachmentsDir = joinPath(dirPath, 'attachments');
             
             await window.electronAPI.createDirectory(attachmentsDir);
@@ -207,7 +124,7 @@ const Editor: React.FC<EditorProps> = ({ onInsertLink, onInsertImage }) => {
                 '粘贴的图片'
               );
               updateSelection(newText, newStart, newEnd);
-              onInsertImage(relativePath, '粘贴的图片');
+              onInsertImageProp(relativePath, '粘贴的图片');
             }
           };
           reader.readAsDataURL(file);
@@ -230,12 +147,22 @@ const Editor: React.FC<EditorProps> = ({ onInsertLink, onInsertImage }) => {
       data-theme={theme}
     >
       {editorMode === 'wysiwyg' && (
-        <div 
-          className="editor-panel wysiwyg-panel"
-          ref={previewRef}
-        >
+        <div className="editor-panel wysiwyg-panel">
+          <textarea
+            ref={sourceEditorRef}
+            className="source-editor wysiwyg-editor"
+            value={activeTab?.content || ''}
+            onChange={handleContentChange}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            onScroll={handleScroll}
+            placeholder="开始输入 Markdown 内容..."
+            spellCheck={false}
+            style={{ color: 'transparent', caretColor: theme === 'dark' ? '#fff' : '#000' }}
+          />
           <div 
-            className="markdown-preview"
+            className="markdown-preview wysiwyg-preview"
+            ref={previewRef}
             dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
         </div>

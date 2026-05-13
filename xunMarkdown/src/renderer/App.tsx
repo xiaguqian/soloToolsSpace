@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useEffect, useState, useRef } from 'react';
+import { useRecoilState, useSetRecoilState } from 'recoil';
 import Toolbar from './components/Toolbar';
 import Editor from './components/Editor';
 import FileTree from './components/FileTree';
@@ -10,8 +10,6 @@ import AIAssistant from './components/AIAssistant';
 import PaymentDialog from './components/PaymentDialog';
 import './App.css';
 import { 
-  workspacePathState, 
-  fileTreeState, 
   tabsState, 
   activeTabIdState,
   themeState,
@@ -28,14 +26,12 @@ const getBasename = (filePath: string): string => {
 };
 
 function App() {
-  const [workspacePath, setWorkspacePath] = useRecoilState(workspacePathState);
-  const [fileTree, setFileTree] = useRecoilState(fileTreeState);
   const [tabs, setTabs] = useRecoilState(tabsState);
   const [activeTabId, setActiveTabId] = useRecoilState(activeTabIdState);
   const [theme, setTheme] = useRecoilState(themeState);
   const [sidebarVisible, setSidebarVisible] = useRecoilState(sidebarVisibleState);
   const [outlineVisible, setOutlineVisible] = useRecoilState(outlineVisibleState);
-  const [shortcuts, setShortcuts] = useRecoilState(shortcutsState);
+  const setShortcuts = useSetRecoilState(shortcutsState);
   
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -223,10 +219,12 @@ function App() {
 
     const result = await window.electronAPI.saveFileDialog(activeTab.fileName);
     if (result.success && result.filePath) {
-      await window.electronAPI.writeFile(result.filePath, activeTab.content);
+      const savedFilePath = result.filePath;
+      await window.electronAPI.writeFile(savedFilePath, activeTab.content);
+      const newFileName = getBasename(savedFilePath);
       setTabs(prev => prev.map(tab => 
         tab.id === activeTabId 
-          ? { ...tab, filePath: result.filePath, fileName: getBasename(result.filePath), isModified: false }
+          ? { ...tab, filePath: savedFilePath, fileName: newFileName, isModified: false }
           : tab
       ));
     }
@@ -446,22 +444,6 @@ function App() {
 </html>
 `;
       await window.electronAPI.exportHtml(htmlContent);
-    }
-  };
-
-  const handleOpenFolder = async () => {
-    const result = await window.electronAPI.openFolderDialog();
-    if (result.success && result.folderPath) {
-      setWorkspacePath(result.folderPath);
-      const filesResult = await window.electronAPI.listFiles(result.folderPath);
-      if (filesResult.success && filesResult.files) {
-        setFileTree(filesResult.files.map(f => ({
-          name: f.name,
-          path: f.path,
-          isDirectory: f.isDirectory
-        })));
-      }
-      setSidebarVisible(true);
     }
   };
 
