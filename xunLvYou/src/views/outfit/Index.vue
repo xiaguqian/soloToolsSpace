@@ -1,6 +1,6 @@
 <template>
   <div class="outfit-page">
-    <van-nav-bar title="穿搭推荐" :arrow="false" />
+    <van-nav-bar title="穿搭推荐" left-arrow @click-left="onBack" />
 
     <div class="page-content">
       <div class="section-title">上传衣服图片</div>
@@ -108,9 +108,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { generateOutfit } from '@/api/outfit'
 import { getGalleryList, addToGallery } from '@/api/gallery'
 import { showToast } from 'vant'
+
+const router = useRouter()
 
 const generating = ref(false)
 const showGalleryPicker = ref(false)
@@ -185,6 +188,10 @@ async function saveToGallery() {
   } catch (error) {
     showToast('保存失败')
   }
+}
+
+function onBack() {
+  router.back()
 }
 
 onMounted(() => {

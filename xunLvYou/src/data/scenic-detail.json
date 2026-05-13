@@ -18,12 +18,16 @@
     {
       "id": "1",
       "title": "故宫一日游攻略",
-      "author": "旅行者小王"
+      "author": "旅行者小王",
+      "coverImage": "https://images.unsplash.com/photo-1584467541268-b040f83be3fd?w=200",
+      "createTime": "2024-01-15"
     },
     {
       "id": "2",
       "title": "拍照最佳地点推荐",
-      "author": "摄影师小李"
+      "author": "摄影师小李",
+      "coverImage": "https://images.unsplash.com/photo-1599054799131-3b3f465219ab?w=200",
+      "createTime": "2024-01-12"
     }
   ]
 }

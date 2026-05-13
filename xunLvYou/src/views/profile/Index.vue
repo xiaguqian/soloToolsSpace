@@ -77,64 +77,16 @@
         </template>
       </van-cell>
     </van-cell-group>
-
-    <van-cell-group inset>
-      <van-cell
-        title="设置"
-        is-link
-        @click="showSettings = true"
-      >
-        <template #icon>
-          <van-icon name="setting-o" size="20" />
-        </template>
-      </van-cell>
-      <van-cell
-        title="关于我们"
-        is-link
-      >
-        <template #icon>
-          <van-icon name="info-o" size="20" />
-        </template>
-      </van-cell>
-    </van-cell-group>
-
-    <van-popup
-      v-model:show="showSettings"
-      round
-      position="bottom"
-      :style="{ height: 'auto' }"
-    >
-      <div class="settings-popup">
-        <div class="popup-title">设置</div>
-        <van-cell-group>
-          <van-cell title="当前环境" :value="currentEnvText" />
-        </van-cell-group>
-        <div class="popup-tip">
-          提示：当前环境为本地环境，使用本地模拟数据。切换环境请修改 src/config/env.js 文件。
-        </div>
-        <van-button
-          type="primary"
-          round
-          block
-          style="margin-top: 16px"
-          @click="showSettings = false"
-        >
-          关闭
-        </van-button>
-      </div>
-    </van-popup>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserInfo } from '@/api/user'
-import { getEnv } from '@/config/env'
 import { showToast } from 'vant'
 
 const router = useRouter()
-const showSettings = ref(false)
 const userInfo = ref({
   avatar: '',
   nickname: '',
@@ -143,17 +95,6 @@ const userInfo = ref({
   favoriteCount: 0,
   planCount: 0,
   noteCount: 0
-})
-
-const currentEnvText = computed(() => {
-  const env = getEnv()
-  const map = {
-    local: '本地开发',
-    dev: '开发环境',
-    test: '测试环境',
-    prod: '生产环境'
-  }
-  return map[env] || env
 })
 
 async function loadUserInfo() {
@@ -233,23 +174,5 @@ onMounted(() => {
   border-radius: 10px;
   padding: 0 6px;
   margin-right: 8px;
-}
-
-.settings-popup {
-  padding: 20px;
-}
-
-.popup-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.popup-tip {
-  font-size: 12px;
-  color: #969799;
-  margin-top: 12px;
-  line-height: 1.6;
 }
 </style>

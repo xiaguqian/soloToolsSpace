@@ -57,15 +57,29 @@
 
         <van-divider>出行笔记</van-divider>
         <div class="notes-section">
-          <van-cell-group v-if="scenic.notes?.length">
-            <van-cell
+          <div v-if="scenic.notes?.length" class="notes-list">
+            <div
               v-for="note in scenic.notes"
               :key="note.id"
-              :title="note.title"
-              :label="note.author"
+              class="note-item"
               @click="goNoteDetail(note.id)"
-            />
-          </van-cell-group>
+            >
+              <van-image
+                :src="note.coverImage"
+                width="80"
+                height="80"
+                fit="cover"
+                radius="8"
+              />
+              <div class="note-info">
+                <div class="note-title">{{ note.title }}</div>
+                <div class="note-meta">
+                  <span class="note-author">{{ note.author }}</span>
+                  <span class="note-time">{{ note.createTime }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-else class="empty-state">
             暂无出行笔记，快来发布第一篇吧
           </div>
@@ -225,5 +239,49 @@ onMounted(() => {
   background: #fff;
   border-radius: 12px;
   margin-top: 12px;
+  padding: 12px;
+}
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.note-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.note-item:active {
+  background: #f7f8fa;
+}
+
+.note-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.note-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #323233;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.note-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #969799;
 }
 </style>
