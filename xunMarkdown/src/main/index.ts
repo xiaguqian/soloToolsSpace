@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
@@ -7,6 +7,151 @@ import Store from 'electron-store';
 const store = new Store();
 let mainWindow: BrowserWindow | null = null;
 let windows: BrowserWindow[] = [];
+
+const createMenu = () => {
+  const template = [
+    {
+      label: '文件',
+      submenu: [
+        {
+          label: '新建文件',
+          accelerator: 'Ctrl+N',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-new-file');
+            }
+          }
+        },
+        {
+          label: '打开文件',
+          accelerator: 'Ctrl+O',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-open-file');
+            }
+          }
+        },
+        {
+          label: '打开文件夹',
+          accelerator: 'Ctrl+Shift+O',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-open-folder');
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '保存',
+          accelerator: 'Ctrl+S',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-save');
+            }
+          }
+        },
+        {
+          label: '另存为',
+          accelerator: 'Ctrl+Shift+S',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-save-as');
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '导出为 PDF',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-export-pdf');
+            }
+          }
+        },
+        {
+          label: '导出为 HTML',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-export-html');
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '退出',
+          accelerator: 'Ctrl+Q',
+          role: 'quit'
+        }
+      ]
+    },
+    {
+      label: '编辑',
+      submenu: [
+        { label: '撤销', role: 'undo' },
+        { label: '重做', role: 'redo' },
+        { type: 'separator' },
+        { label: '剪切', role: 'cut' },
+        { label: '复制', role: 'copy' },
+        { label: '粘贴', role: 'paste' },
+        { label: '删除', role: 'delete' },
+        { label: '全选', role: 'selectAll' },
+        { type: 'separator' },
+        {
+          label: '查找',
+          accelerator: 'Ctrl+F',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              win.webContents.send('menu-search');
+            }
+          }
+        }
+      ]
+    },
+    {
+      label: '视图',
+      submenu: [
+        { label: '重新加载', role: 'reload' },
+        { label: '强制重新加载', role: 'forceReload' },
+        { type: 'separator' },
+        { label: '实际大小', role: 'resetZoom' },
+        { label: '放大', role: 'zoomIn' },
+        { label: '缩小', role: 'zoomOut' },
+        { type: 'separator' },
+        { label: '全屏', role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: '帮助',
+      submenu: [
+        {
+          label: '关于',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) {
+              dialog.showMessageBox(win, {
+                type: 'info',
+                title: '关于 xunMarkdown',
+                message: 'xunMarkdown',
+                detail: '一款现代化的 Markdown 编辑器\n\n版本: 1.0.0'
+              });
+            }
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template as any);
+  Menu.setApplicationMenu(menu);
+};
 
 const createWindow = (isBlank: boolean = false): BrowserWindow => {
   const window = new BrowserWindow({
@@ -41,6 +186,7 @@ const createWindow = (isBlank: boolean = false): BrowserWindow => {
 };
 
 app.whenReady().then(() => {
+  createMenu();
   mainWindow = createWindow(true);
 
   app.on('activate', () => {

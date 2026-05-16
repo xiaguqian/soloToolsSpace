@@ -135,7 +135,7 @@ const Editor: React.FC<EditorProps> = ({ onInsertLink: _onInsertLink, onInsertIm
   };
 
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
-    if (previewRef.current && editorMode === 'split') {
+    if (previewRef.current) {
       const scrollPercentage = e.currentTarget.scrollTop / (e.currentTarget.scrollHeight - e.currentTarget.clientHeight);
       previewRef.current.scrollTop = scrollPercentage * (previewRef.current.scrollHeight - previewRef.current.clientHeight);
     }

@@ -270,11 +270,13 @@
 
 .wysiwyg-panel {
   position: relative;
-  background-color: var(--preview-bg, #fafafa);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--editor-bg, #fff);
 }
 
 [data-theme="dark"] .wysiwyg-panel {
-  --preview-bg: #252526;
+  --editor-bg: #1e1e1e;
 }
 
 .wysiwyg-editor {
@@ -283,20 +285,23 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 2;
   background: transparent !important;
   color: transparent !important;
   caret-color: var(--text-color, #000) !important;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-size: 14px;
-  line-height: 1.6;
   padding: 24px;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+  tab-size: 2;
 }
 
 [data-theme="dark"] .wysiwyg-editor {
-  caret-color: #fff !important;
+  caret-color: #e0e0e0 !important;
 }
 
 .wysiwyg-preview {
@@ -305,12 +310,23 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   overflow-y: auto;
-  background-color: var(--preview-bg, #fafafa);
+  background-color: var(--editor-bg, #fff);
+  padding: 0;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.wysiwyg-preview .markdown-preview {
+  padding: 24px 24px 24px 24px;
+  margin: 0;
+  max-width: 100%;
+  line-height: 1.8;
+  font-size: 14px;
 }
 
 [data-theme="dark"] .wysiwyg-preview {
-  --preview-bg: #252526;
+  --editor-bg: #1e1e1e;
 }
