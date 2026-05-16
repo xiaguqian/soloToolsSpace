@@ -50,8 +50,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User login(String account, String password) {
         User user = userRepository.findByUsername(account)
-                .orElse(() -> userRepository.findByPhone(account)
-                        .orElse(() -> userRepository.findByEmail(account)
+                .orElseGet(() -> userRepository.findByPhone(account)
+                        .orElseGet(() -> userRepository.findByEmail(account)
                                 .orElseThrow(() -> new RuntimeException("账号不存在"))));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
