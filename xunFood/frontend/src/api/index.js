@@ -7,16 +7,6 @@ export const authApi = {
   register: (phone, code, password, nickname) => request.post('/auth/register', { phone, code, password, nickname })
 }
 
-export const recipeApi = {
-  getList: (type, page, size) => request.get('/recipes/list', { params: { type, page, size } }),
-  getDetail: (id) => request.get(`/recipes/detail/${id}`),
-  toggleLike: (id) => request.post(`/recipes/${id}/like`),
-  toggleFavorite: (id) => request.post(`/recipes/${id}/favorite`),
-  startCooking: (id) => request.post(`/recipes/${id}/cook`),
-  getMyFavorites: () => request.get('/recipes/my-favorites'),
-  getMyRecipes: () => request.get('/recipes/my-recipes')
-}
-
 export const userApi = {
   getCurrentUser: () => request.get('/users/me'),
   getUserById: (id) => request.get(`/users/${id}`),
