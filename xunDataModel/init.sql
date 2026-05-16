@@ -222,6 +222,23 @@ INSERT INTO api_gateway (name, path, method, description) VALUES
 ('图像生成', '/v1/images/generations', 'POST', '图像生成API'),
 ('嵌入', '/v1/embeddings', 'POST', '文本嵌入API');
 
+-- 模型快捷入口表
+CREATE TABLE IF NOT EXISTS model_shortcuts (
+    id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'ID',
+    model_id INT NOT NULL COMMENT '关联模型ID',
+    shortcut_type ENUM('official', 'documentation', 'api_reference', 'pricing', 'status') NOT NULL COMMENT '快捷入口类型',
+    url VARCHAR(1000) NOT NULL COMMENT '链接地址',
+    name VARCHAR(100) COMMENT '入口名称',
+    description TEXT COMMENT '描述',
+    is_active TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_model_id (model_id),
+    INDEX idx_shortcut_type (shortcut_type),
+    UNIQUE KEY uk_model_type (model_id, shortcut_type),
+    FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='模型快捷入口表';
+
 -- 系统设置
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES 
 ('system_enabled', '1', '系统是否允许访问'),

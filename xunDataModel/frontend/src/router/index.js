@@ -39,6 +39,12 @@ const routes = [
         meta: { title: '标签管理', icon: 'CollectionTag' }
       },
       {
+        path: 'shortcuts',
+        name: 'Shortcuts',
+        component: () => import('@/views/Shortcuts.vue'),
+        meta: { title: '快捷入口', icon: 'Link' }
+      },
+      {
         path: 'gateway',
         name: 'Gateway',
         component: () => import('@/views/Gateway.vue'),

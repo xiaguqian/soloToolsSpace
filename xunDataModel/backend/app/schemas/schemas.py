@@ -301,3 +301,46 @@ class SystemSettingBase(BaseModel):
 class ChangePassword(BaseModel):
     old_password: str
     new_password: str = Field(..., min_length=6)
+
+
+class ShortcutType(str, Enum):
+    official = "official"
+    documentation = "documentation"
+    api_reference = "api_reference"
+    pricing = "pricing"
+    status = "status"
+
+
+class ModelShortcutCreate(BaseModel):
+    model_id: int
+    shortcut_type: ShortcutType
+    url: str = Field(..., max_length=1000)
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = True
+
+
+class ModelShortcutUpdate(BaseModel):
+    url: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ModelShortcutBase(BaseModel):
+    id: int
+    model_id: int
+    shortcut_type: ShortcutType
+    url: str
+    name: Optional[str]
+    description: Optional[str]
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ModelShortcutListResponse(BaseModel):
+    total: int
+    items: List[ModelShortcutBase]

@@ -174,3 +174,27 @@ class SystemSetting(Base):
     setting_value = Column(Text)
     description = Column(Text)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class ShortcutType(str, enum.Enum):
+    official = "official"
+    documentation = "documentation"
+    api_reference = "api_reference"
+    pricing = "pricing"
+    status = "status"
+
+
+class ModelShortcut(Base):
+    __tablename__ = "model_shortcuts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    model_id = Column(Integer, ForeignKey("models.id", ondelete="CASCADE"), nullable=False, index=True)
+    shortcut_type = Column(Enum(ShortcutType), nullable=False, index=True)
+    url = Column(String(1000), nullable=False)
+    name = Column(String(100))
+    description = Column(Text)
+    is_active = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    model = relationship("Model")

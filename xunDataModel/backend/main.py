@@ -8,6 +8,7 @@ from app.api.v1.tags.routes import router as tags_router
 from app.api.v1.gateway.routes import router as gateway_router
 from app.api.v1.logs.routes import router as logs_router
 from app.api.v1.access.routes import router as access_router
+from app.api.v1.shortcuts.routes import router as shortcuts_router
 
 settings = get_settings()
 
@@ -38,6 +39,7 @@ app.include_router(tags_router, prefix="/api/v1/tags", tags=["标签管理"])
 app.include_router(gateway_router, prefix="/api/v1/gateway", tags=["API网关"])
 app.include_router(logs_router, prefix="/api/v1/logs", tags=["请求日志"])
 app.include_router(access_router, prefix="/api/v1/access", tags=["访问控制"])
+app.include_router(shortcuts_router, prefix="/api/v1/shortcuts", tags=["快捷入口"])
 
 if __name__ == "__main__":
     import uvicorn
