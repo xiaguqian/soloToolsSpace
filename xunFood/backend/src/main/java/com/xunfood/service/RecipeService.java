@@ -253,4 +253,38 @@ public class RecipeService {
             }
         }
     }
+
+    public List<User> getLikedUsers(Long recipeId) {
+        List<UserLike> likes = userLikeMapper.selectList(
+                new LambdaQueryWrapper<UserLike>().eq(UserLike::getRecipeId, recipeId));
+        
+        List<Long> userIds = likes.stream().map(UserLike::getUserId).toList();
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        
+        List<User> users = userMapper.selectBatchIds(userIds);
+        users.forEach(u -> {
+            u.setPassword(null);
+            u.setPhone(null);
+        });
+        return users;
+    }
+
+    public List<User> getFavoritedUsers(Long recipeId) {
+        List<UserFavorite> favorites = userFavoriteMapper.selectList(
+                new LambdaQueryWrapper<UserFavorite>().eq(UserFavorite::getRecipeId, recipeId));
+        
+        List<Long> userIds = favorites.stream().map(UserFavorite::getUserId).toList();
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+        
+        List<User> users = userMapper.selectBatchIds(userIds);
+        users.forEach(u -> {
+            u.setPassword(null);
+            u.setPhone(null);
+        });
+        return users;
+    }
 }

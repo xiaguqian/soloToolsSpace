@@ -63,13 +63,33 @@
     </div>
 
     <div class="action-bar" v-if="recipe">
-      <div class="action-item" @click="toggleLike">
-        <van-icon :name="recipe.liked ? 'good-job' : 'good-job-o'" :color="recipe.liked ? '#ff6b6b' : '#999'" />
-        <span :class="{ active: recipe.liked }">{{ recipe.likeCount || 0 }}</span>
+      <div class="action-item">
+        <van-icon 
+          :name="recipe.liked ? 'good-job' : 'good-job-o'" 
+          :color="recipe.liked ? '#ff6b6b' : '#999'" 
+          @click="toggleLike"
+        />
+        <span 
+          class="count-clickable" 
+          :class="{ active: recipe.liked }" 
+          @click="goToUserList('likes')"
+        >
+          {{ recipe.likeCount || 0 }}
+        </span>
       </div>
-      <div class="action-item" @click="toggleFavorite">
-        <van-icon :name="recipe.favorited ? 'star' : 'star-o'" :color="recipe.favorited ? '#ffc107' : '#999'" />
-        <span :class="{ active: recipe.favorited }">{{ recipe.favoriteCount || 0 }}</span>
+      <div class="action-item">
+        <van-icon 
+          :name="recipe.favorited ? 'star' : 'star-o'" 
+          :color="recipe.favorited ? '#ffc107' : '#999'" 
+          @click="toggleFavorite"
+        />
+        <span 
+          class="count-clickable" 
+          :class="{ active: recipe.favorited }" 
+          @click="goToUserList('favorites')"
+        >
+          {{ recipe.favoriteCount || 0 }}
+        </span>
       </div>
       <van-button type="primary" block class="start-btn" @click="startCooking">
         开始做菜
@@ -175,6 +195,18 @@ const goToAuthor = () => {
   if (recipe.value?.author) {
     router.push(`/user/${recipe.value.author.id}`)
   }
+}
+
+const goToUserList = (type) => {
+  if (!recipe.value) return
+  router.push({
+    path: '/user-list',
+    query: {
+      type,
+      id: recipe.value.id,
+      name: recipe.value.title
+    }
+  })
 }
 
 onMounted(() => {
@@ -337,10 +369,15 @@ onMounted(() => {
     align-items: center;
     margin-right: 20px;
     
-    span {
+    .van-icon {
+      cursor: pointer;
+    }
+    
+    .count-clickable {
       font-size: 12px;
       color: #999;
       margin-top: 2px;
+      cursor: pointer;
       
       &.active {
         color: #ff6b6b;

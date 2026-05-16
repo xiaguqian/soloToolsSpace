@@ -15,19 +15,19 @@
       </div>
 
       <div class="stats">
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="showMyRecipes = true">
           <div class="num">{{ user.recipeCount || 0 }}</div>
           <div class="label">菜谱</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserList('likes')">
           <div class="num">{{ user.likeCount || 0 }}</div>
           <div class="label">点赞</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserList('followers')">
           <div class="num">{{ user.followerCount || 0 }}</div>
           <div class="label">粉丝</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserList('followings')">
           <div class="num">{{ user.followingCount || 0 }}</div>
           <div class="label">关注</div>
         </div>
@@ -151,6 +151,18 @@ const handleLogout = () => {
   }).catch(() => {})
 }
 
+const goToUserList = (type) => {
+  if (!user.value) return
+  router.push({
+    path: '/user-list',
+    query: {
+      type,
+      id: user.value.id,
+      name: user.value.nickname
+    }
+  })
+}
+
 watch(showMyRecipes, (val) => {
   if (val) {
     loadMyRecipes()
@@ -201,6 +213,10 @@ onMounted(() => {
   .stat-item {
     flex: 1;
     text-align: center;
+    
+    &.clickable {
+      cursor: pointer;
+    }
     
     .num {
       font-size: 24px;

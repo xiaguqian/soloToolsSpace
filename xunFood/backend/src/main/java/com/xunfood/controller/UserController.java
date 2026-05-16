@@ -6,6 +6,8 @@ import com.xunfood.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -33,5 +35,15 @@ public class UserController {
     public Result<Void> unfollowUser(@PathVariable Long id) {
         userService.unfollowUser(id);
         return Result.success();
+    }
+
+    @GetMapping("/{id}/followers")
+    public Result<List<User>> getFollowers(@PathVariable Long id) {
+        return Result.success(userService.getFollowers(id));
+    }
+
+    @GetMapping("/{id}/followings")
+    public Result<List<User>> getFollowings(@PathVariable Long id) {
+        return Result.success(userService.getFollowings(id));
     }
 }

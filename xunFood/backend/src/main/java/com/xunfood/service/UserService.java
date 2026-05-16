@@ -193,6 +193,48 @@ public class UserService {
         }
     }
 
+    public List<User> getFollowers(Long userId) {
+        List<UserFollow> follows = userFollowMapper.selectList(
+                new LambdaQueryWrapper<UserFollow>().eq(UserFollow::getFollowingId, userId));
+        
+        List<Long> followerIds = follows.stream().map(UserFollow::getFollowerId).toList();
+        if (followerIds.isEmpty()) {
+            return List.of();
+        }
+        
+        List<User> users = userMapper.selectBatchIds(followerIds);
+        enrichUsers(users);
+        return users;
+    }
+
+    public List<User> getFollowings(Long userId) {
+        List<UserFollow> follows = userFollowMapper.selectList(
+                new LambdaQueryWrapper<UserFollow>().eq(UserFollow::getFollowerId, userId));
+        
+        List<Long> followingIds = follows.stream().map(UserFollow::getFollowingId).toList();
+        if (followingIds.isEmpty()) {
+            return List.of();
+        }
+        
+        List<User> users = userMapper.selectBatchIds(followingIds);
+        enrichUsers(users);
+        return users;
+    }
+
+    private void enrichUsers(List<User> users) {
+        Long currentUserId = UserContext.getUserId();
+        users.forEach(u -> {
+            u.setPassword(null);
+            u.setPhone(null);
+            if (currentUserId != null) {
+                UserFollow follow = userFollowMapper.selectOne(new LambdaQueryWrapper<UserFollow>()
+                        .eq(UserFollow::getFollowerId, currentUserId)
+                        .eq(UserFollow::getFollowingId, u.getId()));
+                u.setFollowed(follow != null);
+            }
+        });
+    }
+
     private User safeUser(User user) {
         if (user == null) return null;
         user.setPassword(null);

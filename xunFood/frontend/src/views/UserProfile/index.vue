@@ -25,19 +25,19 @@
       </div>
 
       <div class="stats">
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserRecipes">
           <div class="num">{{ user.recipeCount || 0 }}</div>
           <div class="label">菜谱</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserList('likes')">
           <div class="num">{{ user.likeCount || 0 }}</div>
           <div class="label">点赞</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserList('followers')">
           <div class="num">{{ user.followerCount || 0 }}</div>
           <div class="label">粉丝</div>
         </div>
-        <div class="stat-item">
+        <div class="stat-item clickable" @click="goToUserList('followings')">
           <div class="num">{{ user.followingCount || 0 }}</div>
           <div class="label">关注</div>
         </div>
@@ -55,11 +55,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { showToast } from 'vant'
 import { userApi } from '@/api'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 
 const user = ref(null)
@@ -96,6 +98,22 @@ const toggleFollow = async () => {
   } catch (e) {
     console.error(e)
   }
+}
+
+const goToUserList = (type) => {
+  if (!user.value) return
+  router.push({
+    path: '/user-list',
+    query: {
+      type,
+      id: user.value.id,
+      name: user.value.nickname
+    }
+  })
+}
+
+const goToUserRecipes = () => {
+  showToast('用户菜谱列表功能开发中')
 }
 
 onMounted(() => {
@@ -143,6 +161,10 @@ onMounted(() => {
   .stat-item {
     flex: 1;
     text-align: center;
+    
+    &.clickable {
+      cursor: pointer;
+    }
     
     .num {
       font-size: 24px;

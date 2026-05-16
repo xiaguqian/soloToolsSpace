@@ -3,6 +3,7 @@ package com.xunfood.controller;
 import com.xunfood.common.PageResult;
 import com.xunfood.common.Result;
 import com.xunfood.entity.Recipe;
+import com.xunfood.entity.User;
 import com.xunfood.service.RecipeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -54,5 +55,15 @@ public class RecipeController {
     @GetMapping("/my-recipes")
     public Result<List<Recipe>> getMyRecipes() {
         return Result.success(recipeService.getMyRecipes());
+    }
+
+    @GetMapping("/{id}/liked-users")
+    public Result<List<User>> getLikedUsers(@PathVariable Long id) {
+        return Result.success(recipeService.getLikedUsers(id));
+    }
+
+    @GetMapping("/{id}/favorited-users")
+    public Result<List<User>> getFavoritedUsers(@PathVariable Long id) {
+        return Result.success(recipeService.getFavoritedUsers(id));
     }
 }
