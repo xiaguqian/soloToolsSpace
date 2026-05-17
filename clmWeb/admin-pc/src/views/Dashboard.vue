@@ -64,11 +64,11 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ShoppingCart, Wallet, Truck, UtensilsCrossed } from '@element-plus/icons-vue'
+import { ShoppingCart, Wallet, Ship, Food } from '@element-plus/icons-vue'
 import { statistics } from '../utils/api'
 import * as echarts from 'echarts'
 
-const icons = { ShoppingCart, Wallet, Truck, Dining: UtensilsCrossed }
+const icons = { ShoppingCart, Wallet, Truck: Ship, Dining: Food }
 
 const todayStats = ref({
   total_count: 0,

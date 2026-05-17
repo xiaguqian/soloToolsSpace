@@ -56,10 +56,10 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
-  LayoutDashboard, 
+  DataAnalysis, 
   Shop, 
   Folder, 
-  QrCode, 
+  Grid, 
   ShoppingCart, 
   Setting 
 } from '@element-plus/icons-vue'
@@ -68,10 +68,10 @@ const router = useRouter()
 const route = useRoute()
 
 const icons = {
-  LayoutDashboard,
+  LayoutDashboard: DataAnalysis,
   Shop,
   Folder,
-  QrCode,
+  QrCode: Grid,
   ShoppingCart,
   Setting
 }
