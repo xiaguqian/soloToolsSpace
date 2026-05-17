@@ -58,6 +58,31 @@ CREATE TABLE IF NOT EXISTS product_sku (
     FOREIGN KEY (product_id) REFERENCES product(id)
 );
 
+CREATE TABLE IF NOT EXISTS user_address (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    tenant_id INT NOT NULL,
+    user_phone VARCHAR(20) NOT NULL,
+    receiver VARCHAR(50) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address_detail TEXT NOT NULL,
+    is_default TINYINT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES tenant(id)
+);
+
+CREATE TABLE IF NOT EXISTS admin_user (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    tenant_id INT NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(50),
+    role VARCHAR(20) DEFAULT 'admin',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES tenant(id)
+);
+
 CREATE TABLE IF NOT EXISTS orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
     tenant_id INT NOT NULL,
@@ -84,40 +109,15 @@ CREATE TABLE IF NOT EXISTS order_item (
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
-CREATE TABLE IF NOT EXISTS user_address (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id INT NOT NULL,
-    user_phone VARCHAR(20) NOT NULL,
-    receiver VARCHAR(50) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    address_detail TEXT NOT NULL,
-    is_default TINYINT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (tenant_id) REFERENCES tenant(id)
-);
-
-CREATE TABLE IF NOT EXISTS admin_user (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id INT NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    name VARCHAR(50),
-    role VARCHAR(20) DEFAULT 'admin',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (tenant_id) REFERENCES tenant(id)
-);
-
 INSERT IGNORE INTO tenant (id, name, logo, tel, business_hours, enable_takeout, min_delivery_amount, delivery_fee) VALUES
 (1, '美味餐厅', 'https://via.placeholder.com/100', '13800138000', '10:00-22:00', 1, 20, 5);
 
 INSERT IGNORE INTO dining_table (tenant_id, table_name, qrcode_url, status) VALUES
-(1, '1号桌', 'http://localhost:8011/menu/1?tableId=1', 'available'),
-(1, '2号桌', 'http://localhost:8011/menu/1?tableId=2', 'available'),
-(1, '3号桌', 'http://localhost:8011/menu/1?tableId=3', 'available'),
-(1, '4号桌', 'http://localhost:8011/menu/1?tableId=4', 'available'),
-(1, '5号桌', 'http://localhost:8011/menu/1?tableId=5', 'available');
+(1, '1号桌', 'http://localhost:8012?tenantId=1&tableId=1', 'available'),
+(1, '2号桌', 'http://localhost:8012?tenantId=1&tableId=2', 'available'),
+(1, '3号桌', 'http://localhost:8012?tenantId=1&tableId=3', 'available'),
+(1, '4号桌', 'http://localhost:8012?tenantId=1&tableId=4', 'available'),
+(1, '5号桌', 'http://localhost:8012?tenantId=1&tableId=5', 'available');
 
 INSERT IGNORE INTO category (tenant_id, name, sort_order) VALUES
 (1, '热销推荐', 1),

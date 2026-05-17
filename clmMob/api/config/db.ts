@@ -1,5 +1,6 @@
 
 import mysql from 'mysql2/promise';
+import fs from 'fs';
 
 export const pool = mysql.createPool({
   host: 'localhost',
@@ -19,16 +20,15 @@ export async function initDatabase() {
       password: '871502794',
     });
     
-    await connection.execute('CREATE DATABASE IF NOT EXISTS clm_mob');
+    await connection.query('CREATE DATABASE IF NOT EXISTS clm_mob');
     await connection.end();
     
-    const fs = require('fs');
     const sql = fs.readFileSync('./init.sql', 'utf8');
-    const queries = sql.split(';').filter(q => q.trim());
+    const queries = sql.split(';').filter((q: string) => q.trim());
     
     for (const query of queries) {
       if (query.trim()) {
-        await pool.execute(query);
+        await pool.query(query);
       }
     }
     
