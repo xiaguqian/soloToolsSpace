@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xunreader.mapper.ShelfBookMapper">
+    <select id="selectByGroupId" resultType="com.xunreader.entity.ShelfBook">
+        SELECT * FROM shelf_books WHERE group_id = #{groupId}
+    </select>
+</mapper>
