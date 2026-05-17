@@ -6,6 +6,7 @@ import StorePage from './pages/StorePage'
 import ParserPage from './pages/ParserPage'
 import Reader from './components/Reader/Reader'
 import ReadingSettings from './components/Reader/ReadingSettings'
+import { readFile } from './utils/storage'
 
 function App() {
   const { theme, currentPage, setCurrentPage, showReadingSettings, setShowReadingSettings, addBookToShelf, addToReadingHistory } = useAppStore()
@@ -16,18 +17,20 @@ function App() {
     document.documentElement.className = theme === 'dark' ? 'dark' : ''
   }, [theme])
 
-  const handleBookClick = (book) => {
+  const handleBookClick = async (book) => {
     addToReadingHistory(book)
     if (book.filePath) {
       setReadingContent('正在加载...')
-      const fs = window.require('fs')
-      fs.readFile(book.filePath, 'utf-8', (err, data) => {
-        if (err) {
-          setReadingContent('读取文件失败')
+      try {
+        const result = await readFile(book.filePath)
+        if (result.success) {
+          setReadingContent(result.content)
         } else {
-          setReadingContent(data)
+          setReadingContent('读取文件失败: ' + (result.error || '未知错误'))
         }
-      })
+      } catch (error) {
+        setReadingContent('读取文件失败: ' + error.message)
+      }
     } else {
       setReadingContent(`    ${book.name}\n\n    ${book.author}\n\n    ${book.description || '暂无简介'}\n\n    章节内容预览...`)
     }
