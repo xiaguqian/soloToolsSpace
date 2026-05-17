@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const pool = require('../config/database');
+const { query } = require('../config/database');
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -11,7 +11,7 @@ const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const [rows] = await pool.execute('SELECT * FROM admin_user WHERE id = ?', [decoded.id]);
+    const { results: rows } = await query('SELECT * FROM admin_user WHERE id = ?', [decoded.id]);
     
     if (rows.length === 0) {
       return res.status(401).json({ code: 401, message: '用户不存在' });

@@ -141,13 +141,13 @@ CREATE TABLE `admin_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理端账号表';
 
 INSERT INTO `admin_user` (`tenant_id`, `phone`, `password_hash`, `name`, `role`) VALUES
-(NULL, '13800138000', '$2b$10$EixZaYbB.rK4fl8x2q7Meu6Q6D2V5fF5Q5Q5Q5Q5Q5Q5Q5Q5Q5Q', '平台管理员', 1);
+(NULL, '13800138000', '$2b$10$aVxtSSvl74NWMe/xyjO3.evWU3QhCwkruLz0m.KVkoJNmaHe6nsU2', '平台管理员', 1);
 
 INSERT INTO `tenant` (`name`, `logo`, `tel`, `business_hours`, `enable_takeout`, `min_delivery_amount`, `delivery_fee`) VALUES
 ('测试餐厅', '', '13800138001', '10:00-22:00', 1, 20.00, 5.00);
 
 INSERT INTO `admin_user` (`tenant_id`, `phone`, `password_hash`, `name`, `role`) VALUES
-(1, '13800138001', '$2b$10$EixZaYbB.rK4fl8x2q7Meu6Q6D2V5fF5Q5Q5Q5Q5Q5Q5Q5Q5Q', '商户管理员', 2);
+(1, '13800138001', '$2b$10$aVxtSSvl74NWMe/xyjO3.evWU3QhCwkruLz0m.KVkoJNmaHe6nsU2', '商户管理员', 2);
 
 INSERT INTO `category` (`tenant_id`, `name`, `sort_order`) VALUES
 (1, '热销菜品', 1),

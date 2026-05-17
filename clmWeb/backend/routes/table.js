@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/database');
+const { query } = require('../config/database');
 const { authenticateToken, requireTenant } = require('../middleware/auth');
 const QRCode = require('qrcode');
 const fs = require('fs');
@@ -17,7 +17,7 @@ if (!fs.existsSync(uploadsDir)) {
 router.get('/list', async (req, res) => {
   try {
     const tenantId = req.user.tenant_id;
-    const [rows] = await pool.execute('SELECT * FROM dining_table WHERE tenant_id = ? ORDER BY table_name ASC', [tenantId]);
+    const { results: rows } = await query('SELECT * FROM dining_table WHERE tenant_id = ? ORDER BY table_name ASC', [tenantId]);
     res.json({ code: 200, data: rows });
   } catch (error) {
     console.error('获取桌号列表错误:', error);
@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
-    const [rows] = await pool.execute('SELECT * FROM dining_table WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM dining_table WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '桌号不存在' });
     }
@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ code: 400, message: '请填写桌号名称' });
     }
 
-    const [result] = await pool.execute(
+    const { results: result } = await query(
       'INSERT INTO dining_table (tenant_id, table_name, status) VALUES (?, ?, ?)',
       [tenantId, table_name, 1]
     );
@@ -67,12 +67,12 @@ router.put('/:id', async (req, res) => {
     const { table_name, status } = req.body;
     const tenantId = req.user.tenant_id;
     
-    const [existsRows] = await pool.execute('SELECT id FROM dining_table WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: existsRows } = await query('SELECT id FROM dining_table WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (existsRows.length === 0) {
       return res.status(404).json({ code: 404, message: '桌号不存在' });
     }
 
-    await pool.execute('UPDATE dining_table SET table_name = ?, status = ? WHERE id = ?', [table_name, status, id]);
+    await query('UPDATE dining_table SET table_name = ?, status = ? WHERE id = ?', [table_name, status, id]);
     
     res.json({ code: 200, message: '修改成功' });
   } catch (error) {
@@ -86,12 +86,12 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [existsRows] = await pool.execute('SELECT id FROM dining_table WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: existsRows } = await query('SELECT id FROM dining_table WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (existsRows.length === 0) {
       return res.status(404).json({ code: 404, message: '桌号不存在' });
     }
 
-    await pool.execute('DELETE FROM dining_table WHERE id = ?', [id]);
+    await query('DELETE FROM dining_table WHERE id = ?', [id]);
     
     res.json({ code: 200, message: '删除成功' });
   } catch (error) {
@@ -105,7 +105,7 @@ router.post('/generate-qrcode', async (req, res) => {
     const { table_id } = req.body;
     const tenantId = req.user.tenant_id;
     
-    const [rows] = await pool.execute('SELECT * FROM dining_table WHERE id = ? AND tenant_id = ?', [table_id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM dining_table WHERE id = ? AND tenant_id = ?', [table_id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '桌号不存在' });
     }
@@ -122,7 +122,7 @@ router.post('/generate-qrcode', async (req, res) => {
 
     const qrcodeUrl = `http://localhost:8001/uploads/${fileName}`;
     
-    await pool.execute('UPDATE dining_table SET qrcode_url = ? WHERE id = ?', [qrcodeUrl, table_id]);
+    await query('UPDATE dining_table SET qrcode_url = ? WHERE id = ?', [qrcodeUrl, table_id]);
     
     res.json({ code: 200, message: '生成成功', data: { qrcode_url: qrcodeUrl } });
   } catch (error) {
@@ -143,7 +143,7 @@ router.post('/batch-generate-qrcode', async (req, res) => {
     const results = [];
     
     for (const table_id of table_ids) {
-      const [rows] = await pool.execute('SELECT * FROM dining_table WHERE id = ? AND tenant_id = ?', [table_id, tenantId]);
+      const { results: rows } = await query('SELECT * FROM dining_table WHERE id = ? AND tenant_id = ?', [table_id, tenantId]);
       if (rows.length === 0) continue;
       
       const table = rows[0];
@@ -158,7 +158,7 @@ router.post('/batch-generate-qrcode', async (req, res) => {
 
       const qrcodeUrl = `http://localhost:8001/uploads/${fileName}`;
       
-      await pool.execute('UPDATE dining_table SET qrcode_url = ? WHERE id = ?', [qrcodeUrl, table_id]);
+      await query('UPDATE dining_table SET qrcode_url = ? WHERE id = ?', [qrcodeUrl, table_id]);
       
       results.push({ table_id, table_name: table.table_name, qrcode_url: qrcodeUrl });
     }
@@ -180,7 +180,7 @@ router.put('/batch-status', async (req, res) => {
     }
 
     const placeholders = ids.map(() => '?').join(',');
-    await pool.execute(`UPDATE dining_table SET status = ? WHERE id IN (${placeholders}) AND tenant_id = ?`, [status, ...ids, tenantId]);
+    await query(`UPDATE dining_table SET status = ? WHERE id IN (${placeholders}) AND tenant_id = ?`, [status, ...ids, tenantId]);
     
     res.json({ code: 200, message: '操作成功' });
   } catch (error) {

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/database');
+const { query } = require('../config/database');
 const { authenticateToken, requireTenant } = require('../middleware/auth');
 
 router.use(authenticateToken);
@@ -11,17 +11,17 @@ router.get('/today', async (req, res) => {
     const tenantId = req.user.tenant_id;
     const today = new Date().toISOString().split('T')[0];
     
-    const [dineInRows] = await pool.execute(
+    const { results: dineInRows } = await query(
       'SELECT COUNT(*) as count FROM orders WHERE tenant_id = ? AND type = 1 AND DATE(created_at) = ?',
       [tenantId, today]
     );
     
-    const [takeoutRows] = await pool.execute(
+    const { results: takeoutRows } = await query(
       'SELECT COUNT(*) as count FROM orders WHERE tenant_id = ? AND type = 2 AND DATE(created_at) = ?',
       [tenantId, today]
     );
     
-    const [revenueRows] = await pool.execute(
+    const { results: revenueRows } = await query(
       'SELECT SUM(total_amount) as amount FROM orders WHERE tenant_id = ? AND pay_status = 1 AND DATE(created_at) = ?',
       [tenantId, today]
     );
@@ -46,7 +46,7 @@ router.get('/hot-products', async (req, res) => {
     const tenantId = req.user.tenant_id;
     const today = new Date().toISOString().split('T')[0];
     
-    const [rows] = await pool.execute(`
+    const { results: rows } = await query(`
       SELECT oi.product_name, SUM(oi.quantity) as total_quantity
       FROM order_item oi
       JOIN orders o ON oi.order_id = o.id
@@ -74,7 +74,7 @@ router.get('/trend', async (req, res) => {
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const [rows] = await pool.execute(
+      const { results: rows } = await query(
         'SELECT COUNT(*) as count, SUM(total_amount) as amount FROM orders WHERE tenant_id = ? AND DATE(created_at) = ?',
         [tenantId, dateStr]
       );
@@ -97,18 +97,18 @@ router.get('/summary', async (req, res) => {
   try {
     const tenantId = req.user.tenant_id;
     
-    const [productCount] = await pool.execute(
+    const { results: productCount } = await query(
       'SELECT COUNT(*) as count FROM product WHERE tenant_id = ? AND status = 1',
       [tenantId]
     );
     
-    const [tableCount] = await pool.execute(
+    const { results: tableCount } = await query(
       'SELECT COUNT(*) as count FROM dining_table WHERE tenant_id = ? AND status = 1',
       [tenantId]
     );
     
     const today = new Date().toISOString().split('T')[0];
-    const [pendingOrders] = await pool.execute(
+    const { results: pendingOrders } = await query(
       'SELECT COUNT(*) as count FROM orders WHERE tenant_id = ? AND order_status = 0 AND DATE(created_at) = ?',
       [tenantId, today]
     );

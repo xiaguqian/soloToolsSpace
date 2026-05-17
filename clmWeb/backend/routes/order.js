@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/database');
+const { query } = require('../config/database');
 const { authenticateToken, requireTenant } = require('../middleware/auth');
 
 router.use(authenticateToken);
@@ -36,13 +36,13 @@ router.get('/list', async (req, res) => {
     const offset = (page - 1) * pageSize;
     const countSql = sql.replace('SELECT o.*, t.table_name', 'SELECT COUNT(*) as total');
     
-    const [countRows] = await pool.execute(countSql, params);
+    const { results: countRows } = await query(countSql, params);
     const total = countRows[0].total;
     
     sql += ' LIMIT ?, ?';
     params.push(offset, parseInt(pageSize));
     
-    const [rows] = await pool.execute(sql, params);
+    const { results: rows } = await query(sql, params);
     
     res.json({
       code: 200,
@@ -64,7 +64,7 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [orderRows] = await pool.execute(
+    const { results: orderRows } = await query(
       'SELECT o.*, t.table_name FROM orders o LEFT JOIN dining_table t ON o.table_id = t.id WHERE o.id = ? AND o.tenant_id = ?',
       [id, tenantId]
     );
@@ -73,11 +73,11 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
 
-    const [itemRows] = await pool.execute('SELECT * FROM order_item WHERE order_id = ?', [id]);
+    const { results: itemRows } = await query('SELECT * FROM order_item WHERE order_id = ?', [id]);
     
     let address = null;
     if (orderRows[0].address_id) {
-      const [addressRows] = await pool.execute('SELECT * FROM user_address WHERE id = ?', [orderRows[0].address_id]);
+      const { results: addressRows } = await query('SELECT * FROM user_address WHERE id = ?', [orderRows[0].address_id]);
       if (addressRows.length > 0) {
         address = addressRows[0];
       }
@@ -102,7 +102,7 @@ router.put('/:id/accept', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
@@ -112,7 +112,7 @@ router.put('/:id/accept', async (req, res) => {
       return res.status(400).json({ code: 400, message: '订单状态不允许接单' });
     }
 
-    await pool.execute('UPDATE orders SET order_status = 1 WHERE id = ?', [id]);
+    await query('UPDATE orders SET order_status = 1 WHERE id = ?', [id]);
     
     res.json({ code: 200, message: '接单成功' });
   } catch (error) {
@@ -126,7 +126,7 @@ router.put('/:id/progress', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
@@ -136,7 +136,7 @@ router.put('/:id/progress', async (req, res) => {
       return res.status(400).json({ code: 400, message: '订单状态不允许确认制作' });
     }
 
-    await pool.execute('UPDATE orders SET order_status = 2 WHERE id = ?', [id]);
+    await query('UPDATE orders SET order_status = 2 WHERE id = ?', [id]);
     
     res.json({ code: 200, message: '确认制作成功' });
   } catch (error) {
@@ -150,7 +150,7 @@ router.put('/:id/complete', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
@@ -160,7 +160,7 @@ router.put('/:id/complete', async (req, res) => {
       return res.status(400).json({ code: 400, message: '订单状态不允许完成' });
     }
 
-    await pool.execute('UPDATE orders SET order_status = 2 WHERE id = ?', [id]);
+    await query('UPDATE orders SET order_status = 2 WHERE id = ?', [id]);
     
     res.json({ code: 200, message: '订单已完成' });
   } catch (error) {
@@ -174,7 +174,7 @@ router.put('/:id/deliver', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
@@ -187,7 +187,7 @@ router.put('/:id/deliver', async (req, res) => {
       return res.status(400).json({ code: 400, message: '订单状态不允许配送' });
     }
 
-    await pool.execute('UPDATE orders SET order_status = 4 WHERE id = ?', [id]);
+    await query('UPDATE orders SET order_status = 4 WHERE id = ?', [id]);
     
     res.json({ code: 200, message: '已标记为配送中' });
   } catch (error) {
@@ -201,7 +201,7 @@ router.put('/:id/cancel', async (req, res) => {
     const { id } = req.params;
     const tenantId = req.user.tenant_id;
     
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
+    const { results: rows } = await query('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [id, tenantId]);
     if (rows.length === 0) {
       return res.status(404).json({ code: 404, message: '订单不存在' });
     }
@@ -211,7 +211,7 @@ router.put('/:id/cancel', async (req, res) => {
       return res.status(400).json({ code: 400, message: '已完成的订单无法取消' });
     }
 
-    await pool.execute('UPDATE orders SET order_status = 3 WHERE id = ?', [id]);
+    await query('UPDATE orders SET order_status = 3 WHERE id = ?', [id]);
     
     res.json({ code: 200, message: '订单已取消' });
   } catch (error) {

@@ -3,6 +3,8 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+const { testConnection } = require('./config/database');
+
 const authRouter = require('./routes/auth');
 const productRouter = require('./routes/product');
 const categoryRouter = require('./routes/category');
@@ -32,6 +34,19 @@ app.get('/api/health', (req, res) => {
   res.json({ code: 200, message: 'OK' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.use((err, req, res, next) => {
+  console.error('服务器错误:', err);
+  res.status(500).json({ code: 500, message: '服务器内部错误' });
+});
+
+console.log('🔧 正在初始化服务...');
+testConnection((success) => {
+  if (!success) {
+    console.error('❌ 数据库连接失败，请检查数据库配置');
+    process.exit(1);
+  }
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 服务器启动成功: http://localhost:${PORT}`);
+  });
 });
