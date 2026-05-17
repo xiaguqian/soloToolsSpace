@@ -204,27 +204,27 @@ export function AddressPage({ onBack }: AddressPageProps) {
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-1.5">省市区</label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <input
                     type="text"
                     value={addressForm.province}
                     onChange={(e) => setAddressForm({ ...addressForm, province: e.target.value })}
                     placeholder="省"
-                    className="flex-1 px-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm transition-all"
+                    className="min-w-0 px-2.5 py-3 border border-gray-200 rounded-xl outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm transition-all"
                   />
                   <input
                     type="text"
                     value={addressForm.city}
                     onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                     placeholder="市"
-                    className="flex-1 px-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm transition-all"
+                    className="min-w-0 px-2.5 py-3 border border-gray-200 rounded-xl outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm transition-all"
                   />
                   <input
                     type="text"
                     value={addressForm.district}
                     onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
                     placeholder="区"
-                    className="flex-1 px-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm transition-all"
+                    className="min-w-0 px-2.5 py-3 border border-gray-200 rounded-xl outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm transition-all"
                   />
                 </div>
               </div>
