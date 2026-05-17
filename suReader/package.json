@@ -3,38 +3,33 @@
   "version": "1.0.0",
   "description": "桌面小说阅读软件",
   "main": "electron.js",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "vite build",
     "electron:build:win": "electron-builder --win",
     "electron:build:mac": "electron-builder --mac",
     "electron:build": "electron-builder",
-    "electron:start": "electron ."
+    "electron:start": "electron .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0",
-    "sqlite3": "^5.1.7",
     "axios": "^1.6.5",
     "zustand": "^4.5.0",
-    "pdfjs-dist": "^4.0.0",
-    "node-chm": "^2.0.0",
     "classnames": "^2.5.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.1.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^8.0.13",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "concurrently": "^8.2.2",
     "wait-on": "^7.0.1",
     "tailwindcss": "^3.4.1",
     "postcss": "^8.4.33",
-    "autoprefixer": "^10.4.17",
-    "@types/node": "^20.11.0",
-    "@types/react": "^18.2.48",
-    "@types/react-dom": "^18.2.18"
+    "autoprefixer": "^10.4.17"
   },
   "build": {
     "appId": "com.sureader.app",
@@ -46,8 +41,7 @@
       "target": "nsis"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "src/assets/icon.icns"
+      "target": "dmg"
     }
   }
 }

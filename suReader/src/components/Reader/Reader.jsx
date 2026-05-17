@@ -28,16 +28,16 @@ const Reader = ({ book, content, onClose }) => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [progress, onClose])
 
-  const handleTouchStart = useRef(null)
-  const handleTouchEnd = useRef(null)
+  const touchStartRef = useRef(null)
+  const touchEndRef = useRef(null)
 
   const handleTouchStart = (e) => {
-    handleTouchStart.current = e.touches[0].clientX
+    touchStartRef.current = e.touches[0].clientX
   }
 
   const handleTouchEnd = (e) => {
-    handleTouchEnd.current = e.changedTouches[0].clientX
-    const diff = handleTouchEnd.current - handleTouchStart.current
+    touchEndRef.current = e.changedTouches[0].clientX
+    const diff = touchEndRef.current - touchStartRef.current
     if (Math.abs(diff) > 50) {
       if (diff > 0) {
         setProgress(Math.max(0, progress - 10))
