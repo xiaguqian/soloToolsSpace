@@ -15,7 +15,7 @@
       <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-icon view-icon">
-            <el-icon><Eye /></el-icon>
+            <el-icon><EyeIcon /></el-icon>
           </div>
           <div class="stat-info">
             <div class="stat-value">{{ stats.scenicViews }}</div>
@@ -98,7 +98,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
-import { Location, Eye, Document, User, Star, LogIn } from '@element-plus/icons-vue'
+import { Location, EyeIcon, Document, User, Star, LogIn } from '@element-plus/icons-vue'
 
 const stats = reactive({
   scenicCount: 0,
