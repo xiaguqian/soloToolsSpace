@@ -15,7 +15,7 @@ function createWindow() {
       contextIsolation: false,
       enableRemoteModule: true,
     },
-    title: 'SuReader',
+    title: 'SuReader - 小说阅读器',
   })
 
   const isDev = process.env.NODE_ENV === 'development'
