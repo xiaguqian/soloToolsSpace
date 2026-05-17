@@ -24,8 +24,11 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { auth } from '../utils/api'
+
+const router = useRouter()
 
 const form = reactive({
   phone: '',
@@ -47,7 +50,7 @@ const handleLogin = async () => {
       localStorage.setItem('user', JSON.stringify(res.data.user))
       ElMessage.success('登录成功')
       setTimeout(() => {
-        window.location.href = '/'
+        router.push('/')
       }, 1000)
     } else {
       ElMessage.error(res.message)

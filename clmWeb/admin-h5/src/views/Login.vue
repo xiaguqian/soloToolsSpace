@@ -21,8 +21,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { auth } from '../utils/api'
+
+const router = useRouter()
 
 const phone = ref('')
 const password = ref('')
@@ -40,7 +43,7 @@ const handleLogin = async () => {
       localStorage.setItem('user', JSON.stringify(res.data.user))
       showToast('登录成功')
       setTimeout(() => {
-        window.location.href = '/'
+        router.push('/')
       }, 1000)
     } else {
       showToast(res.message)
