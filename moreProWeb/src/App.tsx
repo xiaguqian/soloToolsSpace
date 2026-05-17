@@ -62,8 +62,7 @@ export default function App() {
     } else if (tab === 'cart') {
       setCurrentPage('cart');
     } else if (tab === 'profile') {
-      setCurrentPage('home');
-      setActiveTab('profile');
+      setCurrentPage('profile');
     }
   };
 

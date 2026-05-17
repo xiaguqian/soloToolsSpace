@@ -28,10 +28,10 @@ export function TabBar({ activeTab, onTabChange, cartCount }: TabBarProps) {
                 isActive ? 'text-orange-500' : 'text-gray-400'
               }`}
             >
-              <div className="relative">
+              <div className="relative w-6 h-6 flex items-center justify-center">
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                {tab.badge && tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-xs rounded-full px-1">
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="absolute -top-1 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 text-white text-xs rounded-full px-0.5">
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </span>
                 )}
