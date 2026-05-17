@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, ChevronRight, CheckCircle } from 'lucide-react';
 import { useStore } from '../store';
 import { formatPrice } from '../utils';
@@ -13,6 +13,17 @@ export function CheckoutPage({ onBack, onSuccess }: CheckoutPageProps) {
   const { cart, user, tenant, selectedAddress, setSelectedAddress, clearCart } = useStore();
   const [loading, setLoading] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
+
+  useEffect(() => {
+    if (user && !selectedAddress && user.addressList.length > 0) {
+      const defaultAddress = user.addressList.find((addr) => addr.isDefault);
+      if (defaultAddress) {
+        setSelectedAddress(defaultAddress);
+      } else {
+        setSelectedAddress(user.addressList[0]);
+      }
+    }
+  }, [user, selectedAddress, setSelectedAddress]);
 
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   

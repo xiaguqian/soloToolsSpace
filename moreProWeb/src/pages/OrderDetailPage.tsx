@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, MapPin, Phone } from 'lucide-react';
+import { useStore } from '../store';
 import { Order } from '../api';
 import { formatPrice, formatDate, getOrderStatusText } from '../utils';
 import { cancelOrder, payOrder } from '../api';
@@ -12,8 +13,11 @@ interface OrderDetailPageProps {
 
 export function OrderDetailPage({ order, onBack, onRefresh }: OrderDetailPageProps) {
   const [loading, setLoading] = useState(false);
+  const { tenant } = useStore();
   const items = JSON.parse(order.items || '[]');
   const address = JSON.parse(order.address || '{}');
+  
+  const config = tenant?.configJson ? JSON.parse(tenant.configJson) : {};
 
   const handleCancel = async () => {
     if (!confirm('确定要取消订单吗？')) return;
@@ -138,6 +142,7 @@ export function OrderDetailPage({ order, onBack, onRefresh }: OrderDetailPagePro
         )}
         {order.status === 'paid' && (
           <button
+            onClick={() => alert(`商家联系电话: ${config.contact_phone || '暂无'}`)}
             className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium"
           >
             联系商家
