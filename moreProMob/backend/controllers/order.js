@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const { execute } = require('../config/db');
 
 const getOrders = async (req, res) => {
   try {
@@ -28,8 +28,8 @@ const getOrders = async (req, res) => {
     sql += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), offset);
 
-    const [rows] = await pool.execute(sql, params);
-    const [count] = await pool.execute('SELECT COUNT(*) as total FROM `order` WHERE tenant_id = ?', [req.user.tenant_id]);
+    const [rows] = await execute(sql, params);
+    const [count] = await execute('SELECT COUNT(*) as total FROM `order` WHERE tenant_id = ?', [req.user.tenant_id]);
 
     res.json({
       code: 200,
@@ -47,7 +47,7 @@ const getOrders = async (req, res) => {
 
 const getOrder = async (req, res) => {
   try {
-    const [rows] = await pool.execute(
+    const [rows] = await execute(
       'SELECT o.*, eu.nickname, eu.phone FROM `order` o LEFT JOIN end_user eu ON o.end_user_id = eu.id WHERE o.id = ? AND o.tenant_id = ?',
       [req.params.id, req.user.tenant_id]
     );
@@ -71,7 +71,7 @@ const updateOrder = async (req, res) => {
     else if (status === 2) updateField = 'ship_time';
     else if (status === 3) updateField = 'finish_time';
 
-    const [result] = await pool.execute(
+    const [result] = await execute(
       `UPDATE \`order\` SET status = ?, ${updateField} = ? WHERE id = ? AND tenant_id = ?`,
       [status, now, req.params.id, req.user.tenant_id]
     );
@@ -102,7 +102,7 @@ const exportOrders = async (req, res) => {
       params.push(end_date);
     }
 
-    const [rows] = await pool.execute(sql, params);
+    const [rows] = await execute(sql, params);
     
     const headers = ['订单号', '金额', '状态', '创建时间', '用户昵称', '用户手机'];
     const statusMap = { 0: '待支付', 1: '已支付', 2: '已发货', 3: '已完成', 4: '已取消' };

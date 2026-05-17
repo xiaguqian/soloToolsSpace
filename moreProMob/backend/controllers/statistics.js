@@ -1,25 +1,25 @@
-const pool = require('../config/db');
+const { execute } = require('../config/db');
 
 const getDashboard = async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    const [todayOrders] = await pool.execute(
+    const [todayOrders] = await execute(
       'SELECT COUNT(*) as count, SUM(total_amount) as amount FROM `order` WHERE tenant_id = ? AND DATE(created_at) = ?',
       [req.user.tenant_id, today]
     );
     
-    const [totalOrders] = await pool.execute(
+    const [totalOrders] = await execute(
       'SELECT COUNT(*) as count, SUM(total_amount) as amount FROM `order` WHERE tenant_id = ?',
       [req.user.tenant_id]
     );
     
-    const [totalUsers] = await pool.execute(
+    const [totalUsers] = await execute(
       'SELECT COUNT(*) as count FROM end_user WHERE tenant_id = ?',
       [req.user.tenant_id]
     );
     
-    const [totalProducts] = await pool.execute(
+    const [totalProducts] = await execute(
       'SELECT COUNT(*) as count FROM product WHERE tenant_id = ?',
       [req.user.tenant_id]
     );
@@ -62,7 +62,7 @@ const getOrderTrend = async (req, res) => {
              GROUP BY DATE_FORMAT(o.created_at, '%Y-%m') ORDER BY month`;
     }
 
-    const [rows] = await pool.execute(sql, [req.user.tenant_id]);
+    const [rows] = await execute(sql, [req.user.tenant_id]);
     
     res.json({ code: 200, data: rows });
   } catch (error) {
@@ -74,7 +74,7 @@ const getProductRanking = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
     
-    const [rows] = await pool.execute(
+    const [rows] = await execute(
       'SELECT p.id, p.name, p.price, SUM(JSON_LENGTH(o.items_json)) as sales FROM product p LEFT JOIN `order` o ON FIND_IN_SET(p.id, REPLACE(REPLACE(o.items_json, \'{"product_id":\', \'\'), \',\' ,\'\')) > 0 WHERE p.tenant_id = ? AND o.tenant_id = ? GROUP BY p.id ORDER BY sales DESC LIMIT ?',
       [req.user.tenant_id, req.user.tenant_id, parseInt(limit)]
     );

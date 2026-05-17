@@ -1,19 +1,21 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const { execute } = require('../config/db');
 
 const login = async (req, res) => {
+  console.log('Login request received:', req.body);
+  
   try {
-    console.log('Login request received:', req.body);
-    
     const { phone, password } = req.body;
     
     if (!phone || !password) {
       return res.status(400).json({ code: 400, message: '请提供手机号和密码' });
     }
     
-    const [rows] = await pool.execute('SELECT * FROM staff WHERE phone = ? AND status = 1', [phone]);
+    console.log('Querying staff table for phone:', phone);
+    const [rows] = await execute('SELECT * FROM staff WHERE phone = ? AND status = 1', [phone]);
     console.log('Query result:', rows);
+    console.log('Query result length:', rows.length);
     
     if (!rows.length) {
       return res.status(401).json({ code: 401, message: '手机号或密码错误' });
@@ -22,7 +24,8 @@ const login = async (req, res) => {
     const staff = rows[0];
     console.log('Staff found:', staff.id, staff.name);
     
-    const valid = await bcrypt.compare(password, staff.password_hash);
+    console.log('Comparing password...');
+    const valid = bcrypt.compareSync(password, staff.password_hash);
     console.log('Password validation result:', valid);
     
     if (!valid) {
@@ -32,7 +35,7 @@ const login = async (req, res) => {
     const token = jwt.sign({ id: staff.id, tenant_id: staff.tenant_id, role: staff.role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
     console.log('Token generated');
     
-    const [tenant] = await pool.execute('SELECT * FROM tenant WHERE id = ?', [staff.tenant_id]);
+    const [tenant] = await execute('SELECT * FROM tenant WHERE id = ?', [staff.tenant_id]);
     console.log('Tenant found:', tenant[0]?.name);
 
     res.json({
@@ -62,7 +65,7 @@ const logout = (req, res) => {
 
 const getProfile = async (req, res) => {
   try {
-    const [tenant] = await pool.execute('SELECT * FROM tenant WHERE id = ?', [req.user.tenant_id]);
+    const [tenant] = await execute('SELECT * FROM tenant WHERE id = ?', [req.user.tenant_id]);
     res.json({
       code: 200,
       data: {

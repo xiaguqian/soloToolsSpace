@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const { execute } = require('../config/db');
 
 const getProducts = async (req, res) => {
   try {
@@ -24,8 +24,8 @@ const getProducts = async (req, res) => {
     sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), offset);
 
-    const [rows] = await pool.execute(sql, params);
-    const [count] = await pool.execute('SELECT COUNT(*) as total FROM product WHERE tenant_id = ?', [req.user.tenant_id]);
+    const [rows] = await execute(sql, params);
+    const [count] = await execute('SELECT COUNT(*) as total FROM product WHERE tenant_id = ?', [req.user.tenant_id]);
 
     res.json({
       code: 200,
@@ -43,7 +43,7 @@ const getProducts = async (req, res) => {
 
 const getProduct = async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM product WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
+    const [rows] = await execute('SELECT * FROM product WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
     if (!rows.length) {
       return res.status(404).json({ code: 404, message: '商品不存在' });
     }
@@ -56,7 +56,7 @@ const getProduct = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const { name, price, stock, category, description, image_url } = req.body;
-    const [result] = await pool.execute(
+    const [result] = await execute(
       'INSERT INTO product (tenant_id, name, price, stock, category, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [req.user.tenant_id, name, price, stock || 0, category, description, image_url]
     );
@@ -70,7 +70,7 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { name, price, stock, category, description, image_url, status } = req.body;
-    await pool.execute(
+    await execute(
       'UPDATE product SET name = ?, price = ?, stock = ?, category = ?, description = ?, image_url = ?, status = ? WHERE id = ? AND tenant_id = ?',
       [name, price, stock, category, description, image_url, status, req.params.id, req.user.tenant_id]
     );
@@ -83,7 +83,7 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    await pool.execute('DELETE FROM product WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
+    await execute('DELETE FROM product WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
     res.json({ code: 200, message: '删除成功' });
   } catch (error) {
     res.status(500).json({ code: 500, message: '服务器错误' });
@@ -93,7 +93,7 @@ const deleteProduct = async (req, res) => {
 const updateStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    await pool.execute('UPDATE product SET status = ? WHERE id = ? AND tenant_id = ?', [status, req.params.id, req.user.tenant_id]);
+    await execute('UPDATE product SET status = ? WHERE id = ? AND tenant_id = ?', [status, req.params.id, req.user.tenant_id]);
     res.json({ code: 200, message: '状态更新成功' });
   } catch (error) {
     res.status(500).json({ code: 500, message: '服务器错误' });
@@ -102,7 +102,7 @@ const updateStatus = async (req, res) => {
 
 const getCategories = async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT DISTINCT category FROM product WHERE tenant_id = ? AND category IS NOT NULL', [req.user.tenant_id]);
+    const [rows] = await execute('SELECT DISTINCT category FROM product WHERE tenant_id = ? AND category IS NOT NULL', [req.user.tenant_id]);
     res.json({ code: 200, data: rows.map(r => r.category) });
   } catch (error) {
     res.status(500).json({ code: 500, message: '服务器错误' });

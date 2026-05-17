@@ -1,31 +1,34 @@
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 require('dotenv').config();
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  connectTimeout: 10000,
-  acquireTimeout: 10000,
-  timeout: 10000
+const connection = mysql.createConnection({
+  host: '127.0.0.1',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'merchant_db',
+  port: 3306,
+  timezone: 'local',
+  connectTimeout: 5000
 });
 
-const testConnection = async () => {
-  try {
-    const connection = await pool.getConnection();
-    await connection.ping();
-    connection.release();
-    console.log('数据库连接成功');
-  } catch (error) {
-    console.error('数据库连接失败:', error.message);
+connection.connect((err) => {
+  if (err) {
+    console.error('数据库连接失败:', err);
     process.exit(1);
   }
+  console.log('数据库连接成功');
+});
+
+const execute = (sql, params) => {
+  return new Promise((resolve, reject) => {
+    connection.query(sql, params, (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve([results]);
+      }
+    });
+  });
 };
 
-testConnection();
-
-module.exports = pool;
+module.exports = { execute };
