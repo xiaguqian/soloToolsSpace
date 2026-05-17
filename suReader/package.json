@@ -2,7 +2,7 @@
   "name": "suReader",
   "version": "1.0.0",
   "description": "桌面小说阅读软件",
-  "main": "electron.js",
+  "main": "electron.cjs",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
