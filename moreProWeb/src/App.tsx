@@ -11,6 +11,7 @@ import { OrderSuccessPage } from './pages/OrderSuccessPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailPage } from './pages/OrderDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { AddressPage } from './pages/AddressPage';
 import { useStore } from './store';
 import { Tenant, Product, Order } from './api';
 
@@ -24,7 +25,9 @@ type Page =
   | 'checkout'
   | 'order-success'
   | 'orders'
-  | 'order-detail';
+  | 'order-detail'
+  | 'profile'
+  | 'address';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('select-tenant');
@@ -119,6 +122,10 @@ export default function App() {
     setActiveTab('home');
   };
 
+  const handleViewAddress = () => {
+    setCurrentPage('address');
+  };
+
   const handleBack = () => {
     switch (currentPage) {
       case 'product-detail':
@@ -141,6 +148,10 @@ export default function App() {
         break;
       case 'login':
         setCurrentPage('select-tenant');
+        break;
+      case 'address':
+        setCurrentPage('profile');
+        setActiveTab('profile');
         break;
       default:
         setCurrentPage('home');
@@ -233,11 +244,16 @@ export default function App() {
           <ProfilePage
             onLogin={() => setCurrentPage('login')}
             onViewOrders={handleViewOrders}
+            onViewAddress={handleViewAddress}
           />
           {showTabBar && (
             <TabBar activeTab={activeTab} onTabChange={handleTabChange} cartCount={cartCount} />
           )}
         </>
+      )}
+
+      {currentPage === 'address' && (
+        <AddressPage onBack={handleBack} />
       )}
     </div>
   );
