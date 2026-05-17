@@ -32,6 +32,11 @@ app.get('/', (req, res) => {
   res.json({ message: '商户管理系统 API' });
 });
 
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ code: 500, message: '服务器错误', error: err.message });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

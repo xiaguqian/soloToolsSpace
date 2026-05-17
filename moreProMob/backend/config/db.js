@@ -8,7 +8,24 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  connectTimeout: 10000,
+  acquireTimeout: 10000,
+  timeout: 10000
 });
+
+const testConnection = async () => {
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    console.log('数据库连接成功');
+  } catch (error) {
+    console.error('数据库连接失败:', error.message);
+    process.exit(1);
+  }
+};
+
+testConnection();
 
 module.exports = pool;
