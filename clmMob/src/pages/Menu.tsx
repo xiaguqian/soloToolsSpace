@@ -23,7 +23,10 @@ export default function Menu() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!tenantId) return;
+      if (!tenantId) {
+        setLoading(false);
+        return;
+      }
       try {
         const [tenantData, categoriesData, productsData] = await Promise.all([
           tenantApi.getById(parseInt(tenantId)),

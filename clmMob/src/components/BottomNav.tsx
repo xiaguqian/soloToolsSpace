@@ -9,6 +9,9 @@ export default function BottomNav() {
   const cartCount = useStore((state) => state.getCartCount());
 
   const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
     return location.pathname.startsWith(path);
   };
 
